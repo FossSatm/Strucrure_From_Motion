@@ -1,6 +1,8 @@
 import os
 import cv2 as cv
 
+from lib.camera import *
+
 FM_SIFT = "SIFT"
 FM_SURF = "SURF"
 FM_ORB = "ORB"
@@ -85,7 +87,7 @@ class Image:
     def img_open_image(self, src: str):
         self.src = os.path.normpath(src)
         self.dir_src = os.path.dirname(self.src)
-        dir_name = os.path.normpath(self.dir)
+        dir_name = os.path.normpath(self.dir_src)
         dir_name = dir_name.split(os.sep)
         self.dir_name = dir_name[len(dir_name) - 1]
         basename = os.path.splitext(os.path.basename(self.src))
