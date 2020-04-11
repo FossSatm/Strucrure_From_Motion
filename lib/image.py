@@ -8,6 +8,10 @@ FM_SURF = "SURF"
 FM_ORB = "ORB"
 FM_AKAZE = "AKAZE"
 
+CAM_DEFAULT = 0
+CAM_APPROXIMATE = 1
+CAM_FROM_FILE = 2
+
 
 class Image:
     def __init__(self):
@@ -81,6 +85,14 @@ class Image:
         return self.camera.CAMERA_MATRIX()
 
     def INFO(self):
+        info = "Image Name: %s\n" % self.img_name + self.img_suffix
+        info += "Dimensions: %d" % self.width + "x %d" % self.height + " x %d\n" % self.channels
+        info += "Focal Length fx: %.2f\n" % self.camera.FX()
+        info += "             fy: %.2f\n" % self.camera.FY()
+        info += "Features: %d\n" % len(self.kp)
+        return info
+
+    def INFO_DEBUGGING(self):
         info = "src: %s\n" % self.src
         info += "dir_src: %s\n" % self.dir_src
         info += "dir_name: %s\n" % self.dir_name
@@ -106,8 +118,17 @@ class Image:
         self.img_name = basename[0]
         self.img_suffix = basename[1]
 
-    def img_find_features(self, flag=FM_AKAZE):
+    def img_set_camera(self, flag=CAM_DEFAULT):
+        if flag == CAM_APPROXIMATE:
+            self.camera.camera_approximate_parameters(self.width, self.height)
+        elif flag == CAM_FROM_FILE:
+            pass
+        else:
+            self.set_camera_parameters()
+
+    def img_find_features(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT):
         """
+        :param set_camera_method:
         :param flag:
         :return:
         """
@@ -128,6 +149,8 @@ class Image:
         self.channels = 1  # assume that the image is grayscale
         if len(img_size) == 3:  # check if image is really grayscale
             self.channels = img_size[2]  # if not grayscale take the size of channels
+
+        self.img_set_camera(flag=set_camera_method)
 
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         kp, descr = method.detectAndCompute(img, None)  # detect and compute keypoints

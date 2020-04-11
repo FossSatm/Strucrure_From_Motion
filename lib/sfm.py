@@ -11,14 +11,16 @@ class SFM:
                                            "*.ppm", "*.sr", "*.ras"]
         self.image_list: [] = []  # Create the list of images
 
-    def sfm_run(self, f_src: str, fp_method=FM_AKAZE):
+    def sfm_run(self, f_src: str, fp_method=FM_AKAZE, set_camera_method=CAM_DEFAULT):
         """
         Main SFM routine.
+        :param set_camera_method:
         :param f_src: The folder source which contains the images
         :param fp_method: The feature point extraction method
         :return: Nothing
         """
-        self.sfm_set_image_list(f_src)
+        self.sfm_set_image_list(f_src)  # Open Images
+        self.sfm_find_feature_points(flag=fp_method, set_camera_method=set_camera_method)  # Find feature points
 
     def sfm_set_image_list(self, f_src):
         """
@@ -44,3 +46,10 @@ class SFM:
         # print(self.image_list[0].CAMERA_MATRIX())
         # print(self.image_list[0].INFO())
         # -------------------------------------------- #
+
+    def sfm_find_feature_points(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT):
+        for img in self.image_list:
+            print("FIND FEATURE POINTS FOR IMAGE: %s" % img.IMG_NAME())
+            img.img_find_features(flag=flag, set_camera_method=set_camera_method)
+            print(img.INFO())
+            # print(img.INFO_DEBUGGING())
