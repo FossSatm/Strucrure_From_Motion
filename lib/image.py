@@ -15,6 +15,7 @@ CAM_FROM_FILE = 2
 
 class Image:
     def __init__(self):
+        self.img_id: int = 0
         self.src: str = ""
         self.dir_src: str = ""
         self.dir_name: str = ""
@@ -30,11 +31,17 @@ class Image:
         self.kp_ids: [] = []
         self.kp_size: int = 0
 
+        self.feature_list: [] = []
+        self.feature_colors: [] = []
+        self.feature_ids: [] = []
+
         self.camera: Camera = Camera()
 
     # ---------------- #
     # RETURN FUNCTIONS #
     # ---------------- #
+    def IMG_ID(self):
+        return self.img_id
 
     def SRC(self):
         return self.src
@@ -86,6 +93,7 @@ class Image:
 
     def INFO(self):
         info = "Image Name: %s\n" % self.img_name + self.img_suffix
+        info += "Image ID: %d\n" % self.id
         info += "Dimensions: %d" % self.width + "x %d" % self.height + " x %d\n" % self.channels
         info += "Focal Length fx: %.2f\n" % self.camera.FX()
         info += "             fy: %.2f\n" % self.camera.FY()
@@ -93,7 +101,8 @@ class Image:
         return info
 
     def INFO_DEBUGGING(self):
-        info = "src: %s\n" % self.src
+        info = "img_id: %d\n" % self.id
+        info += "src: %s\n" % self.src
         info += "dir_src: %s\n" % self.dir_src
         info += "dir_name: %s\n" % self.dir_name
         info += "img_name: %s\n" % self.img_name
@@ -108,7 +117,8 @@ class Image:
     # SET IMAGES #
     # ---------- #
 
-    def img_open_image(self, src: str):
+    def img_open_image(self, src: str, img_id=0):
+        self.img_id = img_id
         self.src = os.path.normpath(src)
         self.dir_src = os.path.dirname(self.src)
         dir_name = os.path.normpath(self.dir_src)
@@ -159,3 +169,8 @@ class Image:
         self.kp_size = len(self.kp)  # take the size of kp
         for i in range(0, self.kp_size):  # for all kps
             self.kp_ids.append(i)  # set an id the index of kp in list
+
+    def img_set_features(self, feat_list, color_list, feat_ids):
+        self.feature_list = feat_list
+        self.feature_colors = color_list
+        self.feature_ids = feat_ids
