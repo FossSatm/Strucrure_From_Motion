@@ -1,0 +1,4 @@
+# file: ~/.gitignore_global
+venv
+.idea
+*/__pycache__
