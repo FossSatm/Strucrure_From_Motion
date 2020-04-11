@@ -13,8 +13,8 @@ class Camera:
         Creates and return the camera matrix.
         :return: mtrx
         """
-        mtrx = [[fx, 0.0, cx],
-                [0.0, fy, cy],
+        mtrx = [[self.fx, 0.0, self.cx],
+                [0.0, self.fy, self.cy],
                 [0.0, 0.0, 1.0]]
         mtrx = np.array(mtrx)
         return mtrx

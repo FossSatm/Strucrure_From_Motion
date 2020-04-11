@@ -80,6 +80,18 @@ class Image:
     def CAMERA_MATRIX(self):
         return self.camera.CAMERA_MATRIX()
 
+    def INFO(self):
+        info = "src: %s\n" % self.src
+        info += "dir_src: %s\n" % self.dir_src
+        info += "dir_name: %s\n" % self.dir_name
+        info += "img_name: %s\n" % self.img_name
+        info += "img_suffix: %s\n" % self.img_suffix
+        info += "width: %d\n" % self.width
+        info += "height: %d\n" % self.height
+        info += "channels: %d\n" % self.channels
+        info += "feature_points_size: %d\n" % len(self.kp)
+        return info
+
     # ---------- #
     # SET IMAGES #
     # ---------- #
@@ -96,7 +108,6 @@ class Image:
 
     def img_find_features(self, flag=FM_AKAZE):
         """
-
         :param flag:
         :return:
         """
@@ -110,7 +121,15 @@ class Image:
         else:
             method = cv.AKAZE_create()
 
-        img = cv2.imread(self.src, cv2.IMREAD_GRAYSCALE)  # open image as grayscale
+        img = cv.imread(self.src)  # open image as grayscale
+        img_size = img.shape  # take the shape of image (height x width x channels)
+        self.width = img_size[1]  # set width
+        self.height = img_size[0]  # set height
+        self.channels = 1  # assume that the image is grayscale
+        if len(img_size) == 3:  # check if image is really grayscale
+            self.channels = img_size[2]  # if not grayscale take the size of channels
+
+        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         kp, descr = method.detectAndCompute(img, None)  # detect and compute keypoints
         self.kp = kp  # set kp to image class
         self.descr = descr  # set descr to image class

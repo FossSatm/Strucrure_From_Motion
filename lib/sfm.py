@@ -39,6 +39,8 @@ class SFM:
         # Uncomment the following lines for debugging. #
         # -------------------------------------------- #
         # print(len(self.image_list))
-        for img in self.image_list:
-            print(img.IMG_NAME())
+        # for img in self.image_list:
+            # print(img.IMG_NAME())
+        # print(self.image_list[0].CAMERA_MATRIX())
+        # print(self.image_list[0].INFO())
         # -------------------------------------------- #
