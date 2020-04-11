@@ -1,6 +1,8 @@
 from lib.image import *
 from lib.global_functions import *
 
+LOWE_RATIO = 0.9
+
 
 class ImageMatching:
     def __init__(self):
@@ -32,7 +34,9 @@ class ImageMatching:
         kp_R = self.imgR.KEYPOINT_LIST()
 
         descr_L = self.imgL.DESCRIPTOR_LIST()
+        descr_L = np.array(descr_L, dtype=np.float32)
         descr_R = self.imgR.DESCRIPTOR_LIST()
+        descr_R = np.array(descr_R, dtype=np.float32)
 
         kp_ids_L = self.imgL.KEYPOINT_IDS_LIST()
         kp_ids_R = self.imgR.KEYPOINT_IDS_LIST()
@@ -57,7 +61,7 @@ class ImageMatching:
                 points_R_img_ids.append(kp_ids_R[m.trainIdx])  # Take the ids for the right image
         g_points_size = len(good_matches)  # take the size of good matches
 
-        print("Found %d good matches out of " % g_points_size + " %d matches." % match_pnt_size)
+        message_print("Found %d good matches out of " % g_points_size + " %d matches." % match_pnt_size)
 
         # Create numpy arrays
         points_L_img = np.array(points_L_img)  # POINTS_L
@@ -68,7 +72,7 @@ class ImageMatching:
         pts_L_fund = np.int32(points_L_img)  # Transform float to int32
         pts_R_fund = np.int32(points_R_img)  # Transform float to int32
 
-        F, mask = cv2.findFundamentalMat(pts_L_fund, pts_R_fund)  # Find fundamental matrix using RANSARC
+        F, mask = cv.findFundamentalMat(pts_L_fund, pts_R_fund)  # Find fundamental matrix using RANSARC
         # We select only inlier points
         pts_inlier_L = points_L_img[mask.ravel() == 1]  # Select inliers from imgL using fundamental mask
         pts_inlier_R = points_R_img[mask.ravel() == 1]  # Select inliers from imgR using fundamental mask
@@ -77,10 +81,14 @@ class ImageMatching:
         # Select inlier IDS from imgR_index using fundamental mask
         pts_inlier_R_ids = points_R_img_ids[mask.ravel() == 1]
 
-        color_inlier_L = find_color_list(img_L, pts_L_fund)  # find the corresponding color on left image
-        color_inlier_R = find_color_list(img_R, pts_R_fund)  # find the corresponding color on right image
+        color_inlier_L = find_color_list(self.imgL, pts_L_fund)  # find the corresponding color on left image
+        color_inlier_R = find_color_list(self.imgR, pts_R_fund)  # find the corresponding color on right image
 
         self.imgL.img_set_features(pts_inlier_L, color_inlier_L, pts_inlier_L_ids)
         self.imgR.img_set_features(pts_inlier_R, color_inlier_R, pts_inlier_R_ids)
 
+        g_inlier_size = len(pts_inlier_L)
+        message_print("Found %d good inlier matches out of " % g_inlier_size + " %d good matches." % g_points_size)
+        if g_inlier_size < 0.3*g_points_size:
+            return False
         return True

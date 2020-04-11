@@ -56,9 +56,9 @@ class SFM:
 
     def sfm_find_feature_points(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT):
         for img in self.image_list:
-            print("FIND FEATURE POINTS FOR IMAGE: %s" % img.IMG_NAME())
+            message_print("FIND FEATURE POINTS FOR IMAGE: %s" % img.IMG_NAME())
             img.img_find_features(flag=flag, set_camera_method=set_camera_method)
-            print(img.INFO())
+            message_print(img.INFO())
             # print(img.INFO_DEBUGGING())
 
     def sfm_image_matching(self):
@@ -70,12 +70,14 @@ class SFM:
         match_counter = 0
         for index_L in range(0, image_list_size-1):
             for index_R in range(index_L+1, image_list_size):
-                print("(%d / " % counter + "%d) " % matchSize
-                      + "MATCH IMAGES %s & " % self.image_list[index_L].IMG_NAME()
-                      + "%s" % self.image_list[index_R].IMG_NAME())
+                print("\n")
+                message_print("(%d / " % counter + "%d) " % matchSize
+                              + "MATCH IMAGES %s & " % self.image_list[index_L].IMG_NAME()
+                              + "%s" % self.image_list[index_R].IMG_NAME())
                 m_img = ImageMatching()
                 m_img.m_img_set_images(self.image_list[index_L], self.image_list[index_R], match_counter)
-                if m_img.m_img_match_images():
+                if m_img.m_img_match_images_flann():
                     self.match_list.append(m_img)
                     match_counter += 1
                 counter += 1
+        print(len(self.match_list))

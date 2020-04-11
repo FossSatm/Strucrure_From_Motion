@@ -92,16 +92,18 @@ class Image:
         return self.camera.CAMERA_MATRIX()
 
     def INFO(self):
-        info = "Image Name: %s\n" % self.img_name + self.img_suffix
-        info += "Image ID: %d\n" % self.id
-        info += "Dimensions: %d" % self.width + "x %d" % self.height + " x %d\n" % self.channels
+        info = "\n"
+        info += "Image Name: %s\n" % (self.img_name + self.img_suffix)
+        info += "Image ID: %d\n" % self.img_id
+        info += "Dimensions: %d" % self.width + " x %d" % self.height + " x %d\n" % self.channels
         info += "Focal Length fx: %.2f\n" % self.camera.FX()
         info += "             fy: %.2f\n" % self.camera.FY()
         info += "Features: %d\n" % len(self.kp)
         return info
 
     def INFO_DEBUGGING(self):
-        info = "img_id: %d\n" % self.id
+        info = "\n"
+        info += "img_id: %d\n" % self.img_id
         info += "src: %s\n" % self.src
         info += "dir_src: %s\n" % self.dir_src
         info += "dir_name: %s\n" % self.dir_name
@@ -164,11 +166,12 @@ class Image:
 
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         kp, descr = method.detectAndCompute(img, None)  # detect and compute keypoints
-        self.kp = kp  # set kp to image class
-        self.descr = descr  # set descr to image class
+        self.kp = np.array(kp)  # set kp to image class
+        self.descr = np.array(descr)  # set descr to image class
         self.kp_size = len(self.kp)  # take the size of kp
         for i in range(0, self.kp_size):  # for all kps
             self.kp_ids.append(i)  # set an id the index of kp in list
+        self.kp_ids = np.array(self.kp_ids)
 
     def img_set_features(self, feat_list, color_list, feat_ids):
         self.feature_list = feat_list
