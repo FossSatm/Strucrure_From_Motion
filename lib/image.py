@@ -18,6 +18,9 @@ CAM_FROM_FILE = 2
 
 
 class Image:
+    """
+    A Class which describes as best as it cans an Image.
+    """
     def __init__(self):
         self.img_id: int = 0
         self.src: str = ""
@@ -119,27 +122,38 @@ class Image:
         info += "feature_points_size: %d\n" % len(self.kp)
         return info
 
-    # ---------- #
-    # SET IMAGES #
-    # ---------- #
+    # ------------------- #
+    # SET IMAGE FUNCTIONS #
+    # ------------------- #
 
     def img_open_image(self, src: str, img_id=0):
-        self.img_id = img_id
-        self.src = os.path.normpath(src)
-        self.dir_src = os.path.dirname(self.src)
-        dir_name = os.path.normpath(self.dir_src)
-        dir_name = dir_name.split(os.sep)
-        self.dir_name = dir_name[len(dir_name) - 1]
-        basename = os.path.splitext(os.path.basename(self.src))
-        self.img_name = basename[0]
-        self.img_suffix = basename[1]
+        """
+        Find the appropriate information from the src and set it to image variables
+        :param src: The path to the image
+        :param img_id: A unique id for the image (this used for mash image editing)
+        :return: Nothing
+        """
+        self.img_id = img_id  # Set id
+        self.src = os.path.normpath(src)  # Set src
+        self.dir_src = os.path.dirname(self.src)  # Set dir_src
+        dir_name = os.path.normpath(self.dir_src)  # Normalize dir_src to the os
+        dir_name = dir_name.split(os.sep)  # Find the dir name
+        self.dir_name = dir_name[len(dir_name) - 1]  # Set the dir name
+        basename = os.path.splitext(os.path.basename(self.src))  # Take the image name+suffix
+        self.img_name = basename[0]  # Set the image name
+        self.img_suffix = basename[1]  # Set the suffix
 
     def img_set_camera(self, flag=CAM_DEFAULT):
-        if flag == CAM_APPROXIMATE:
-            self.camera.camera_approximate_parameters(self.width, self.height)
-        elif flag == CAM_FROM_FILE:
+        """
+        Set Camera routine.
+        :param flag: The method for which will be used for camera setting
+        :return: Nothing
+        """
+        if flag == CAM_APPROXIMATE:  # if Camera Approximate
+            self.camera.camera_approximate_parameters(self.width, self.height)  # Approximate the camera parameters
+        elif flag == CAM_FROM_FILE:  # elsif Camera From File (take the parameters from file)
             pass
-        else:
+        else:  # else Set the default parameters
             self.set_camera_parameters()
 
     def img_find_features(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT):
@@ -149,13 +163,13 @@ class Image:
         :return:
         """
         # Choose the Feature Points Extraction method
-        if flag == FM_SIFT:
+        if flag == FM_SIFT:  # if SIFT create sift method
             method = cv.xfeatures2d.SIFT_create(nfeatures=F_THRESHOLD, edgeThreshold=10, contrastThreshold=0.1)
-        elif flag == FM_SURF:
+        elif flag == FM_SURF:  # elif SIFT create surf method
             method = cv.xfeatures2d.SURF_create(hessianThreshold=3000, nOctaves=4, nOctaveLayers=2, upright=0)
-        elif flag == FM_ORB:
+        elif flag == FM_ORB:  # if ORB create orb method
             method = cv.ORB_create()
-        else:
+        else:  # else (if AKAZE) create akaze method
             method = cv.AKAZE_create()
 
         img = cv.imread(self.src)  # open image as grayscale
@@ -166,18 +180,25 @@ class Image:
         if len(img_size) == 3:  # check if image is really grayscale
             self.channels = img_size[2]  # if not grayscale take the size of channels
 
-        self.img_set_camera(flag=set_camera_method)
+        self.img_set_camera(flag=set_camera_method)  # Set camera using the given method
 
-        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)  # Transform image to grayscale
         kp, descr = method.detectAndCompute(img, None)  # detect and compute keypoints
-        self.kp = np.array(kp)  # set kp to image class
-        self.descr = np.array(descr)  # set descr to image class
-        self.kp_size = len(self.kp)  # take the size of kp
-        for i in range(0, self.kp_size):  # for all kps
-            self.kp_ids.append(i)  # set an id the index of kp in list
-        self.kp_ids = np.array(self.kp_ids)
+        self.kp = np.array(kp)  # Set kp to image class
+        self.descr = np.array(descr)  # Set descr to image class
+        self.kp_size = len(self.kp)  # Take the size of kp
+        for i in range(0, self.kp_size):  # For all kps
+            self.kp_ids.append(i)  # Set an id the index of kp in list
+        self.kp_ids = np.array(self.kp_ids)  # Set the ids to image class
 
     def img_set_features(self, feat_list, color_list, feat_ids):
+        """
+        Set the feature list, color list and feature ids. This function is used in image matching.
+        :param feat_list: The feature points list
+        :param color_list: The corresponding colors of the points
+        :param feat_ids: The corresponding ids of the points
+        :return: Nothing
+        """
         self.feature_list = feat_list
         self.feature_colors = color_list
         self.feature_ids = feat_ids
