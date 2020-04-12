@@ -194,6 +194,9 @@ class ImageMatching:
                                         projPoints1=img_L_pnts,
                                         projPoints2=img_R_pnts)
 
+        X_o = 0
+        Y_o = 0
+        Z_o = 0
         for i in range(0, retval):
             p_x = points4D[0][i] / points4D[3][i]
             p_y = points4D[1][i] / points4D[3][i]
@@ -207,9 +210,26 @@ class ImageMatching:
 
             id_tmp = [img_L_pnts_ids[i], img_R_pnts_ids[i]]
 
+            X_o += p_x
+            Y_o += p_y
+            Z_o += p_z
             self.model_coord_list.append(p_tmp)
             self.model_color_list.append(color_tmp)
             self.model_coord_id_list.append(id_tmp)
+
+        X_o /= retval
+        Y_o /= retval
+        Z_o /= retval
+
+        # Move pair model to new principal point
+        dx = 1000.0 - X_o
+        dy = 1000.0 - Y_o
+        dz = 1000.0 - Z_o
+
+        for i in range(0, retval):
+            self.model_coord_list[i][0] += dx
+            self.model_coord_list[i][1] += dy
+            self.model_coord_list[i][2] += dz
 
         # -------------------------------------------- #
         # Uncomment the following lines for debugging. #
