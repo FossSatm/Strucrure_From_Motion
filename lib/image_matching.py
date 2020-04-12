@@ -6,11 +6,17 @@ LOWE_RATIO = 0.9
 
 
 class ImageMatching:
+    """
+    A class which match 2 images
+    """
     def __init__(self):
         self.m_img_id: int = 0
         self.imgL = Image()
         self.imgR = Image()
 
+    # ---------------- #
+    # RETURN FUNCTIONS #
+    # ---------------- #
     def IMG_MATCH_ID(self):
         return self.m_img_id
 
@@ -20,7 +26,17 @@ class ImageMatching:
     def IMG_RIGHT(self):
         return self.imgR
 
+    # ------------------ #
+    # MATCHING FUNCTIONS #
+    # ------------------ #
     def m_img_set_images(self, imgL: Image, imgR: Image, m_img_id=0):
+        """
+        Set the matching information.
+        :param imgL: The left image
+        :param imgR: The right image
+        :param m_img_id: The matching id
+        :return: Nothing
+        """
         self.m_img_id = m_img_id
         self.imgL = imgL
         self.imgR = imgR
@@ -31,18 +47,19 @@ class ImageMatching:
         search_params = dict(checks=50)
         method_flann = cv.FlannBasedMatcher(index_params, search_params)
 
-        kp_L = self.imgL.KEYPOINT_LIST()
-        kp_R = self.imgR.KEYPOINT_LIST()
-
         descr_L = self.imgL.DESCRIPTOR_LIST()
         descr_L = np.array(descr_L, dtype=np.float32)
         descr_R = self.imgR.DESCRIPTOR_LIST()
         descr_R = np.array(descr_R, dtype=np.float32)
 
+        matches = method_flann.knnMatch(descr_L, descr_R, k=2)
+        self.m_img_match(matches=matches)
+
+    def m_img_match(self, matches):
+        kp_L = self.imgL.KEYPOINT_LIST()
+        kp_R = self.imgR.KEYPOINT_LIST()
         kp_ids_L = self.imgL.KEYPOINT_IDS_LIST()
         kp_ids_R = self.imgR.KEYPOINT_IDS_LIST()
-
-        matches = method_flann.knnMatch(descr_L, descr_R, k=2)
 
         # Find all good points as per Lower's ratio.
         good_matches = []  # list for good matches
@@ -90,6 +107,6 @@ class ImageMatching:
 
         g_inlier_size = len(pts_inlier_L)
         message_print("Found %d good inlier matches out of " % g_inlier_size + " %d good matches." % g_points_size)
-        if g_inlier_size < 0.3*g_points_size:
+        if g_inlier_size < 0.3 * g_points_size:
             return False
         return True
