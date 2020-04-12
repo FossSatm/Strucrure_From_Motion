@@ -185,9 +185,6 @@ class ImageMatching:
         R, t = pose_matrix_take_R_t(pose_matrix_R)
         projection_matrix_R = projection_matrix_from_pose_and_camera(R, t, self.imgR.camera.CAMERA_MATRIX())
 
-        print(projection_matrix_L)
-        print(projection_matrix_R)
-
         img_L_pnts = np.transpose(img_L_pnts)  # Set triangulation points for Left image
         img_R_pnts = np.transpose(img_R_pnts)  # Set triangulation points for Left image
 
