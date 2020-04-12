@@ -160,25 +160,30 @@ class ImageMatching:
                       + " %d good inlier matches." % g_inlier_size)
 
         retval, R, t, mask = cv.recoverPose(E, img_L_pnts, img_R_pnts, camera_matrix)  # Recover Pose
+
         # Console Message
         message_print("Found %d pair model points out of " % retval
                       + " %d suggested pair model points." % suggested_pair_model_size)
+        
         if retval < 0.5*suggested_pair_model_size:
             message_print("Not enough points to create a good model.")
             return False
 
         message_print("Triangulate Pair Model")
-
         img_L_pnts = img_L_pnts[mask.ravel() == 255]  # Mask img_L_pnts
         img_R_pnts = img_R_pnts[mask.ravel() == 255]  # Mask img_R_pnts
         img_L_colors = img_L_colors[mask.ravel() == 255]  # Mask img_L_colors
         img_R_colors = img_R_colors[mask.ravel() == 255]  # Mask img_R_colors
         img_L_pnts_ids = img_L_pnts_ids[mask.ravel() == 255]  # Mask img_L_pnts_ids
         img_R_pnts_ids = img_R_pnts_ids[mask.ravel() == 255]  # Mask img_L_pnts_ids
-        #print(len(img_L_pnts))
 
-        projection_matrix_L = set_starting_projection_matrix(camera_matrix)
-        projection_matrix_R = set_projection_matrix_from_pose(R, t, camera_matrix)
+        pose_matrix_L = pose_matrix_default()
+        projection_matrix_L = projection_matrix_from_camera(camera_matrix)
+
+        pose_matrix_R = pose_matrix_using_R_t(R, t)
+        pose_matrix_R = pose_matrix_retransform_using_pair(pose_matrix_R, pose_matrix_L)
+        R, t = pose_matrix_take_R_t(pose_matrix_R)
+        projection_matrix_R = projection_matrix_from_pose_and_camera(R, t, self.imgR.camera.CAMERA_MATRIX())
 
         print(projection_matrix_L)
         print(projection_matrix_R)
@@ -222,13 +227,45 @@ class ImageMatching:
             os.mkdir(export_path_norm)
         export_path += "/" + self.imgL.IMG_NAME() + "_" + self.imgR.IMG_NAME() + ".ply"
         export_path_norm = os.path.normpath(export_path)
-        export_as_ply(self.model_color_list, self.model_color_list, export_path_norm)
+        export_as_ply(np.array(self.model_coord_list), np.array(self.model_color_list), export_path_norm)
         # -------------------------------------------- #
 
         return True
 
 
-def set_starting_projection_matrix(cam_mtrx):
+def pose_matrix_default():
+    T = [[1.0, 0.0, 0.0, 0.0],
+         [0.0, 1.0, 0.0, 0.0],
+         [0.0, 0.0, 1.0, 0.0],
+         [0.0, 0.0, 0.0, 1.0]]
+    return np.array(T)
+
+
+def pose_matrix_using_R_t(R, t):
+    Rt = []
+    Rt.append(R)
+    Rt.append(t)
+    Rt = np.concatenate(Rt, axis=1)
+
+    poseMtrx = []
+    poseMtrx.append(Rt)
+    poseMtrx.append([[0.0, 0.0, 0.0, 1.0]])
+    poseMtrx = np.concatenate(poseMtrx, axis=0)
+    return np.array(poseMtrx)
+
+
+def pose_matrix_retransform_using_pair(base_matrix, transformational_matrix):
+    p_mtrx = np.dot(transformational_matrix, base_matrix)
+    return np.array(p_mtrx)
+
+
+def pose_matrix_take_R_t(pose_matrix):
+    R = pose_matrix[:3, :3]
+    t = pose_matrix[:3, 3:]
+    return np.array(R), np.array(t)
+
+
+def projection_matrix_from_camera(cam_mtrx):
     projectionMtrx = []
     zeroMtrx = [[0], [0], [0]]
     projectionMtrx.append(cam_mtrx)
@@ -237,7 +274,7 @@ def set_starting_projection_matrix(cam_mtrx):
     return np.array(projectionMtrx)
 
 
-def set_projection_matrix_from_pose(R, t, cam_mtrx):
+def projection_matrix_from_pose_and_camera(R, t, cam_mtrx):
     R_t = np.transpose(R)
     m_R_t_t = np.dot(-R_t, t)
 
@@ -249,4 +286,4 @@ def set_projection_matrix_from_pose(R, t, cam_mtrx):
 
     P = np.dot(cam_mtrx, P_tmp)
     # print(P)
-    return P
+    return np.array(P)

@@ -90,8 +90,6 @@ def export_as_ply(vertices, colors, filename):
     :param filename: The path to the file.ply
     :return: Nothing
     """
-    colors = np.array(colors)
-    vertices = np.array(vertices)
     colors = colors.reshape(-1, 3)  # Reshape color list
     vertices = np.hstack([vertices.reshape(-1, 3), colors])  # Merge vertices and colors
 
