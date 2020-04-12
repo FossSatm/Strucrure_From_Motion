@@ -2,6 +2,9 @@
 from lib.image import *
 from lib.global_functions import *
 
+MATCH_FLANN = 0
+MATCH_BRUTEFORCE_HAMMING = 1
+
 LOWE_RATIO = 0.9
 
 
@@ -41,6 +44,15 @@ class ImageMatching:
         self.imgL = imgL
         self.imgR = imgR
 
+    def m_img_match_images_bruteforce_hamming(self):
+        method_brute = cv.DescriptorMatcher_create(cv.DescriptorMatcher_BRUTEFORCE_HAMMING)
+
+        descr_L = self.imgL.DESCRIPTOR_LIST()
+        descr_R = self.imgR.DESCRIPTOR_LIST()
+
+        matches = method_brute.knnMatch(descr_L, descr_R, k=2)
+        return self.m_img_match(matches=matches)
+
     def m_img_match_images_flann(self):
         FLANN_INDEX_KDTREE = 1
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
@@ -53,7 +65,7 @@ class ImageMatching:
         descr_R = np.array(descr_R, dtype=np.float32)
 
         matches = method_flann.knnMatch(descr_L, descr_R, k=2)
-        self.m_img_match(matches=matches)
+        return self.m_img_match(matches=matches)
 
     def m_img_match(self, matches):
         kp_L = self.imgL.KEYPOINT_LIST()
@@ -80,6 +92,9 @@ class ImageMatching:
         g_points_size = len(good_matches)  # take the size of good matches
 
         message_print("Found %d good matches out of " % g_points_size + " %d matches." % match_pnt_size)
+        if g_points_size < 0.25 * match_pnt_size:
+            message_print("Not a good match!")
+            return False
 
         # Create numpy arrays
         points_L_img = np.array(points_L_img)  # POINTS_L
@@ -108,5 +123,6 @@ class ImageMatching:
         g_inlier_size = len(pts_inlier_L)
         message_print("Found %d good inlier matches out of " % g_inlier_size + " %d good matches." % g_points_size)
         if g_inlier_size < 0.3 * g_points_size:
+            message_print("Not a good match!")
             return False
         return True

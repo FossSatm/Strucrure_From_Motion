@@ -20,17 +20,19 @@ class SFM:
         self.image_list: [] = []  # Create the list of images
         self.match_list: [] = []  # Create the list for image matching
 
-    def sfm_run(self, f_src: str, fp_method=FM_AKAZE, set_camera_method=CAM_DEFAULT):
+    def sfm_run(self, f_src: str, fp_method=FM_AKAZE, set_camera_method=CAM_DEFAULT,
+                match_method=MATCH_FLANN):
         """
         Main SFM routine.
-        :param set_camera_method:
         :param f_src: The folder source which contains the images
         :param fp_method: The feature point extraction method
+        :param set_camera_method: The method for calculate camera parameters
+        :param match_method: The method which will be performed the matching
         :return: Nothing
         """
         self.sfm_set_image_list(f_src)  # Open Images
         self.sfm_find_feature_points(flag=fp_method, set_camera_method=set_camera_method)  # Find feature points
-        self.sfm_image_matching()  # Match Images
+        self.sfm_image_matching(match_method=match_method)  # Match Images
 
     def sfm_set_image_list(self, f_src):
         """
@@ -72,7 +74,7 @@ class SFM:
             message_print(img.INFO())  # Print image information
             # print(img.INFO_DEBUGGING())  # Print debugging image information
 
-    def sfm_image_matching(self):
+    def sfm_image_matching(self, match_method=MATCH_FLANN):
         """
         The routine for image matching.
         :return: Nothing
@@ -81,7 +83,7 @@ class SFM:
         image_list_size = len(self.image_list)  # Take the size of the image list (the number of images in list)
         for i in range(1, image_list_size):  # For i in range(1, block_size) => matchSize = Sum_{i=1}^{N}(blockSize - i)
             matchSize += image_list_size - i  # Perform the previous equation
-        loop_counter = 0  # Create a loop counter for message printing
+        loop_counter = 1  # Create a loop counter for message printing
         match_id_counter = 0  # Create a counter for keeping track the match id
         for index_L in range(0, image_list_size-1):  # For all images which can be left (0, N-1)
             for index_R in range(index_L+1, image_list_size):  # For all images which can be right (1, N)
@@ -94,8 +96,13 @@ class SFM:
                 m_img = ImageMatching()  # Create an ImageMatching object
                 # Set the images info
                 m_img.m_img_set_images(self.image_list[index_L], self.image_list[index_R], match_id_counter)
-                if m_img.m_img_match_images_flann():  # If images can be matched
-                    self.match_list.append(m_img)  # Append the match to list
-                    match_id_counter += 1  # Increment the match id counter
+                if match_method == MATCH_BRUTEFORCE_HAMMING:  # If Bruteforce Matching
+                    if m_img.m_img_match_images_bruteforce_hamming():  # If images can be matched
+                        self.match_list.append(m_img)  # Append the match to list
+                        match_id_counter += 1  # Increment the match id counter
+                else:  # Else run flann matching
+                    if m_img.m_img_match_images_flann():  # If images can be matched
+                        self.match_list.append(m_img)  # Append the match to list
+                        match_id_counter += 1  # Increment the match id counter
                 loop_counter += 1  # Increment the loop counter
-        # print(len(self.match_list))  # Debugging Message
+        print(len(self.match_list))  # Debugging Message
