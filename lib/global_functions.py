@@ -1,8 +1,19 @@
-import cv2 as cv
+# Python Libraries #
 import datetime as dt
+
+# OpenCV #
+import cv2 as cv
+
+# Written Libraries #
 from lib.image import *
 
+
 def message_print(msg: str):
+    """
+    Print a console message with current datetime
+    :param msg: Message for printing
+    :return: nothing
+    """
     print(str(dt.datetime.now()) + ":" + msg)
 
 
@@ -10,17 +21,19 @@ def findMax_2x2(mtrx):
     """
     Find the max value of x and y values on a 2x2 matrix
     :param mtrx: A 2x2 matrix [[x1, y1], [x2, y2]]
-    :return: x_max, y_max
+    :return: (x_max, y_max) or (None, None)
     """
-    x_max = 0
-    y_max = 0
+    if len(mtrx) > 0:
+        x_max = mtrx[0][0]  # Set x_max = first X value of mtrx
+        y_max = mtrx[0][1]  # Set y_max = first Y value of mtrx
 
-    for m in mtrx:
-        if x_max < m[0]:
-            x_max = m[0]
-        if y_max < m[1]:
-            y_max = m[1]
-    return x_max, y_max
+        for m in mtrx:  # For all pair values in mtrx
+            if x_max < m[0]:  # If x_max less than X_current value
+                x_max = m[0]  # Set new x_max = X_current
+            if y_max < m[1]:  # If y_max less than Y_current value
+                y_max = m[1]  # Set new y_max = Y_current
+        return x_max, y_max  # return x_max and y_max values
+    return None, None  # If mtrx has no elements then return None, None
 
 
 def find_color_list(img: Image(), pts_inlier: []):
@@ -34,13 +47,13 @@ def find_color_list(img: Image(), pts_inlier: []):
     colors = []  # list to store the colors
     img_open = cv.imread(img.src)  # open the image
 
-    img_size = img_open.shape
+    img_size = img_open.shape  # Take the shape of the image
 
-    if len(img_size) == 3:
+    if len(img_size) == 3:  # If shape is 3 then the image has more than 1 bands (we assume the first 3 represent BGR)
         blue = img_open[:, :, 0]  # take blue channel
         green = img_open[:, :, 1]  # take green channel
         red = img_open[:, :, 2]  # take red channel
-    else:
+    else:  # If shape is not 3, then the image is grayscale and set the same image as (blue, green, red)
         blue = img_open  # take blue channel
         green = img_open  # take green channel
         red = img_open  # take red channel
@@ -66,7 +79,7 @@ def find_color_list(img: Image(), pts_inlier: []):
         col_b = blue[i_L][j_L]  # find the blue pixel color
         col = [col_r, col_g, col_b]  # store them to list named col
         colors.append(col)  # append the col list to color list
-    return colors
+    return colors  # return color list
 
 
 def export_as_ply(vertices, colors, filename):
@@ -77,9 +90,10 @@ def export_as_ply(vertices, colors, filename):
     :param filename: The path to the file.ply
     :return: Nothing
     """
-    colors = colors.reshape(-1, 3)
-    vertices = np.hstack([vertices.reshape(-1, 3), colors])
+    colors = colors.reshape(-1, 3)  # Reshape color list
+    vertices = np.hstack([vertices.reshape(-1, 3), colors])  # Merge vertices and colors
 
+    # Set ply_header
     ply_header = '''ply
     format ascii 1.0
     element vertex %(vert_num)d
@@ -91,6 +105,6 @@ def export_as_ply(vertices, colors, filename):
     property uchar blue
     end_header
     '''
-    with open(filename, 'w') as f:
-        f.write(ply_header % dict(vert_num=len(vertices)))
-        np.savetxt(f, vertices, '%f %f %f %d %d %d')
+    with open(filename, 'w') as f:  # While f has something to write
+        f.write(ply_header % dict(vert_num=len(vertices)))  # write the file
+        np.savetxt(f, vertices, '%f %f %f %d %d %d')  # save the file

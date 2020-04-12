@@ -1,6 +1,10 @@
+# Python Libraries #
 import os
+
+# OpenCV #
 import cv2 as cv
 
+# Written Libraries #
 from lib.camera import *
 
 FM_SIFT = "SIFT"
