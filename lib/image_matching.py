@@ -17,6 +17,10 @@ class ImageMatching:
         self.imgL = Image()
         self.imgR = Image()
 
+        self.model_coord_list: [] = []  # [X, Y, Z]
+        self.model_color_list: [] = []  # [R, G, B]
+        self.model_coord_id_list: [] = []  # [id_L, id_R]
+
     # ---------------- #
     # RETURN FUNCTIONS #
     # ---------------- #
@@ -114,8 +118,14 @@ class ImageMatching:
         # Select inlier IDS from imgR_index using fundamental mask
         pts_inlier_R_ids = points_R_img_ids[mask.ravel() == 1]
 
+        pts_L_fund = pts_L_fund[mask.ravel() == 1]  # Select inliers from pts_L_funds for color finding
+        pts_R_fund = pts_R_fund[mask.ravel() == 1]  # Select inliers from pts_R_funds for color finding
+
         color_inlier_L = find_color_list(self.imgL, pts_L_fund)  # find the corresponding color on left image
         color_inlier_R = find_color_list(self.imgR, pts_R_fund)  # find the corresponding color on right image
+
+        color_inlier_L = np.array(color_inlier_L, dtype=np.int)
+        color_inlier_R = np.array(color_inlier_R, dtype=np.int)
 
         self.imgL.img_set_features(pts_inlier_L, color_inlier_L, pts_inlier_L_ids)
         self.imgR.img_set_features(pts_inlier_R, color_inlier_R, pts_inlier_R_ids)
@@ -125,4 +135,118 @@ class ImageMatching:
         if g_inlier_size < 0.3 * g_points_size:
             message_print("Not a good match!")
             return False
+        return self.m_img_create_model()
+
+    def m_img_create_model(self):
+        img_L_pnts = self.imgL.FEATURE_POINTS()  # Take the points of left image
+        img_R_pnts = self.imgR.FEATURE_POINTS()  # Take the points of right image
+        img_L_colors = self.imgL.FEATURE_COLORS()  # Take the color for points of left image
+        img_R_colors = self.imgR.FEATURE_COLORS()  # Take the color for points of right image
+        img_L_pnts_ids = self.imgL.FEATURE_IDS()  # Take the ids for points of left image
+        img_R_pnts_ids = self.imgR.FEATURE_IDS()  # Take the ids for points of right image
+        camera_matrix = self.imgL.CAMERA_MATRIX()  # Take the camera matrix of the left image (same camera matrix)
+
+        E, mask = cv.findEssentialMat(img_L_pnts, img_R_pnts, camera_matrix)  # find essential matrix
+        g_inlier_size = len(img_L_pnts)  # Take the size of img_L_pnts (same same with all lists)
+        img_L_pnts = img_L_pnts[mask.ravel() == 1]  # Mask img_L_pnts
+        img_R_pnts = img_R_pnts[mask.ravel() == 1]  # Mask img_R_pnts
+        img_L_colors = img_L_colors[mask.ravel() == 1]  # Mask img_L_colors
+        img_R_colors = img_R_colors[mask.ravel() == 1]  # Mask img_R_colors
+        img_L_pnts_ids = img_L_pnts_ids[mask.ravel() == 1]  # Mask img_L_pnts_ids
+        img_R_pnts_ids = img_R_pnts_ids[mask.ravel() == 1]  # Mask img_L_pnts_ids
+        suggested_pair_model_size = len(img_L_pnts)  # Take the size of new img_L_pnts (same same with all lists)
+        # Console Message
+        message_print("Found %d suggested pair model points out of " % suggested_pair_model_size
+                      + " %d good inlier matches." % g_inlier_size)
+
+        retval, R, t, mask = cv.recoverPose(E, img_L_pnts, img_R_pnts, camera_matrix)  # Recover Pose
+        # Console Message
+        message_print("Found %d pair model points out of " % retval
+                      + " %d suggested pair model points." % suggested_pair_model_size)
+        if retval < 0.5*suggested_pair_model_size:
+            message_print("Not enough points to create a good model.")
+            return False
+
+        message_print("Triangulate Pair Model")
+
+        img_L_pnts = img_L_pnts[mask.ravel() == 255]  # Mask img_L_pnts
+        img_R_pnts = img_R_pnts[mask.ravel() == 255]  # Mask img_R_pnts
+        img_L_colors = img_L_colors[mask.ravel() == 255]  # Mask img_L_colors
+        img_R_colors = img_R_colors[mask.ravel() == 255]  # Mask img_R_colors
+        img_L_pnts_ids = img_L_pnts_ids[mask.ravel() == 255]  # Mask img_L_pnts_ids
+        img_R_pnts_ids = img_R_pnts_ids[mask.ravel() == 255]  # Mask img_L_pnts_ids
+        #print(len(img_L_pnts))
+
+        projection_matrix_L = set_starting_projection_matrix(camera_matrix)
+        projection_matrix_R = set_projection_matrix_from_pose(R, t, camera_matrix)
+
+        print(projection_matrix_L)
+        print(projection_matrix_R)
+
+        img_L_pnts = np.transpose(img_L_pnts)  # Set triangulation points for Left image
+        img_R_pnts = np.transpose(img_R_pnts)  # Set triangulation points for Left image
+
+        # Triangulate points
+        points4D = cv.triangulatePoints(projMatr1=projection_matrix_L,
+                                        projMatr2=projection_matrix_R,
+                                        projPoints1=img_L_pnts,
+                                        projPoints2=img_R_pnts)
+
+        for i in range(0, retval):
+            p_x = points4D[0][i] / points4D[3][i]
+            p_y = points4D[1][i] / points4D[3][i]
+            p_z = points4D[2][i] / points4D[3][i]
+            p_tmp = [p_x, p_y, p_z]
+
+            c_r = (img_L_colors[i][0] + img_R_colors[i][0]) / 2
+            c_g = (img_L_colors[i][1] + img_R_colors[i][1]) / 2
+            c_b = (img_L_colors[i][2] + img_R_colors[i][2]) / 2
+            color_tmp = [c_r, c_g, c_b]
+
+            id_tmp = [img_L_pnts_ids[i], img_R_pnts_ids[i]]
+
+            self.model_coord_list.append(p_tmp)
+            self.model_color_list.append(color_tmp)
+            self.model_coord_id_list.append(id_tmp)
+
+        # -------------------------------------------- #
+        # Uncomment the following lines for debugging. #
+        # -------------------------------------------- #
+        # print(self.model_coord_list[0])
+        # print(self.model_color_list[0])
+        # print(self.model_coord_id_list[0])
+        export_path = os.path.expanduser("~/Desktop")
+        export_path += "/sfm_tmp"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/" + self.imgL.IMG_NAME() + "_" + self.imgR.IMG_NAME() + ".ply"
+        export_path_norm = os.path.normpath(export_path)
+        export_as_ply(self.model_color_list, self.model_color_list, export_path_norm)
+        # -------------------------------------------- #
+
         return True
+
+
+def set_starting_projection_matrix(cam_mtrx):
+    projectionMtrx = []
+    zeroMtrx = [[0], [0], [0]]
+    projectionMtrx.append(cam_mtrx)
+    projectionMtrx.append(zeroMtrx)
+    projectionMtrx = np.concatenate(projectionMtrx, axis=1)
+    return np.array(projectionMtrx)
+
+
+def set_projection_matrix_from_pose(R, t, cam_mtrx):
+    R_t = np.transpose(R)
+    m_R_t_t = np.dot(-R_t, t)
+
+    P_tmp = []
+    P_tmp.append(R_t)
+    P_tmp.append(m_R_t_t)
+    P_tmp = np.concatenate(P_tmp, axis=1)
+    # print(P_tmp)
+
+    P = np.dot(cam_mtrx, P_tmp)
+    # print(P)
+    return P

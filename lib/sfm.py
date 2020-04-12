@@ -105,4 +105,4 @@ class SFM:
                         self.match_list.append(m_img)  # Append the match to list
                         match_id_counter += 1  # Increment the match id counter
                 loop_counter += 1  # Increment the loop counter
-        print(len(self.match_list))  # Debugging Message
+        message_print("Found %d matches." % len(self.match_list))  # Console Messaging

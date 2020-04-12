@@ -98,6 +98,15 @@ class Image:
     def CAMERA_MATRIX(self):
         return self.camera.CAMERA_MATRIX()
 
+    def FEATURE_POINTS(self):
+        return self.feature_list
+
+    def FEATURE_COLORS(self):
+        return self.feature_colors
+
+    def FEATURE_IDS(self):
+        return self.feature_ids
+
     def INFO(self):
         info = "\n"
         info += "Image Name: %s\n" % (self.img_name + self.img_suffix)
@@ -154,7 +163,7 @@ class Image:
         elif flag == CAM_FROM_FILE:  # elsif Camera From File (take the parameters from file)
             pass
         else:  # else Set the default parameters
-            self.set_camera_parameters()
+            self.camera.set_camera_parameters()
 
     def img_find_features(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT):
         """
