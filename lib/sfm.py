@@ -142,6 +142,7 @@ class SFM:
 
         # print(model_ids)
         match_list_size = len(self.match_list)
+        show_size = match_list_size - 1
         for i in range(1, match_list_size):
             model_ids_tmp = self.match_list[i].MODEL_ID_LIST()  # Set the point list of the current model to a tmp list
             model_curr_image_L = self.match_list[i].IMG_LEFT()  # Set the current left image
@@ -152,6 +153,7 @@ class SFM:
             model_fin_size = len(model_ids)
 
             print("")
+            print("(%d / " % i + "%d)" % show_size)
             message_print("Add Model %s - " % model_curr_image_L.IMG_NAME() +
                           "%s to Model" % model_curr_image_R.IMG_NAME())
 
@@ -159,7 +161,9 @@ class SFM:
             model_fin_m_points = []
             model_pair_m_ids = []
             model_pair_m_points = []
+            model_fin_pair_m_ids = []
             for j in range(0, model_curr_size):
+                is_not_match = False
                 for k in range(0, model_fin_size):
                     if model_ids[k][model_curr_image_L.IMG_ID()] == model_ids_tmp[j][0]:
                         model_fin_m_ids.append(k)
@@ -168,6 +172,9 @@ class SFM:
                         p_tmp_curr = model_curr_points[j]
                         model_fin_m_points.append(p_tmp_fin)
                         model_pair_m_points.append(p_tmp_curr)
+                        tmp = [k, j]
+                        model_fin_pair_m_ids.append(tmp)
+                        is_not_match = False
                         break
                     elif model_ids[k][model_curr_image_R.IMG_ID()] == model_ids_tmp[j][1]:
                         model_fin_m_ids.append(k)
@@ -176,7 +183,16 @@ class SFM:
                         p_tmp_curr = model_curr_points[j]
                         model_fin_m_points.append(p_tmp_fin)
                         model_pair_m_points.append(p_tmp_curr)
+                        tmp = [k, j]
+                        model_fin_pair_m_ids.append(tmp)
+                        is_not_match = False
                         break
+                    else:
+                        is_not_match = True
+                if is_not_match:
+                    tmp = [-1, -1]
+                    model_fin_pair_m_ids.append(tmp)
+
             model_matching_size = len(model_fin_m_ids)
             if model_matching_size < 5:
                 print("Model cannot be added due to few corresponding points.")
@@ -284,6 +300,35 @@ class SFM:
             model_fin_m_points.clear()
             model_pair_m_ids.clear()
             model_pair_m_points.clear()
+
+            for j in range(0, model_curr_size):
+                if model_fin_pair_m_ids[j][0] == -1:
+                    model_points.append(model_curr_scaled_R_t_points[j])
+                    model_colors.append(model_curr_colors[j])
+                    new_entry = self.sfm_new_entry()
+                    model_ids.append(new_entry)
+                    index = len(model_ids) - 1
+                    model_ids[index][model_curr_image_L.IMG_ID()] = model_ids_tmp[j][0]
+                    model_ids[index][model_curr_image_R.IMG_ID()] = model_ids_tmp[j][1]
+                else:
+                    k_ind = model_fin_pair_m_ids[j][0]
+                    l_ind = model_fin_pair_m_ids[j][1]
+                    model_points[k_ind][0] += model_curr_scaled_R_t_points[l_ind][0]
+                    model_points[k_ind][1] += model_curr_scaled_R_t_points[l_ind][1]
+                    model_points[k_ind][2] += model_curr_scaled_R_t_points[l_ind][2]
+
+                    model_colors[k_ind][0] += model_curr_colors[l_ind][0]
+                    model_colors[k_ind][1] += model_curr_colors[l_ind][1]
+                    model_colors[k_ind][2] += model_curr_colors[l_ind][2]
+
+                    model_points[k_ind][0] /= 2
+                    model_points[k_ind][1] /= 2
+                    model_points[k_ind][2] /= 2
+
+                    model_colors[k_ind][0] /= 2
+                    model_colors[k_ind][1] /= 2
+                    model_colors[k_ind][2] /= 2
+            """
             for j in range(0, model_curr_size):
                 for k in range(0, model_fin_size):
                     if model_ids[k][model_curr_image_L.IMG_ID()] == model_ids_tmp[j][0]:
@@ -330,13 +375,17 @@ class SFM:
                         model_ids[index][model_curr_image_R.IMG_ID()] = model_ids_tmp[j][1]
                         # print(len(model_points))
                         break
+            """
 
             model_size = len(model_points)
             model_points_T = np.transpose(model_points)
             model_centroid = [np.mean(model_points_T[0]), np.mean(model_points_T[1]), np.mean(model_points_T[2])]
             model_centroid_err = [np.std(model_points_T[0]), np.std(model_points_T[1]), np.std(model_points_T[2])]
 
+            message_print("New model size = %d" % model_size)
+            message_print("New model centroid = ")
             print(model_centroid)
+            message_print("New model centroid errors = ")
             print(model_centroid_err)
 
             # -------------------------------------------- #
