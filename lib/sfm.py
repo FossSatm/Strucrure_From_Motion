@@ -113,7 +113,24 @@ class SFM:
         message_print("Found %d matches." % len(self.match_list))  # Console Messaging
 
     def sfm_model_creation(self):
-        model_points = self.match_list[0].MODEL_POINTS_LIST
-        model_colors = self.match_list[0].MODEL_COLOR_LIST
-        model_ids = self.match_list[0].MODEL_ID_LIST
+        model_points = self.match_list[0].MODEL_POINTS_LIST()  # The list of model points
+        model_colors = self.match_list[0].MODEL_COLOR_LIST()  # The list of corresponding colors
+        model_ids = []  # the list with all ids that refers to the same point
 
+        model_ids_tmp = self.match_list[0].MODEL_ID_LIST()  # Set the point list of the current model to a tmp list
+        model_curr_image_L: Image = self.match_list[0].IMG_LEFT()  # Set the current left image
+        model_curr_image_R: Image = self.match_list[0].IMG_RIGHT()  # Set the current right image
+        model_curr_size = len(self.match_list[0].MODEL_POINTS_LIST())  # Find the size of the current model
+        for i in range(0, model_curr_size):
+            new_entry = self.sfm_new_entry()
+            model_ids.append(new_entry)
+            model_ids[i][model_curr_image_L.IMG_ID()] = model_ids_tmp[i][0]
+            model_ids[i][model_curr_image_R.IMG_ID()] = model_ids_tmp[i][1]
+
+
+    def sfm_new_entry(self):
+        model_new_entry_id = []  # Create an id list for the new entry points
+        image_list_size = len(self.image_list)  # Take the size of the block (all opened images)
+        for i in range(0, image_list_size):  # For each image
+            model_new_entry_id.append(-1)  # Append -1 (-1 represent no matching)
+        return model_new_entry_id
