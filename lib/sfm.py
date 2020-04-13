@@ -1,6 +1,7 @@
 # Python Libraries #
 import os
 import glob
+import math as mth
 
 # Written Libraries #
 from lib.image import *
@@ -113,6 +114,10 @@ class SFM:
         message_print("Found %d matches." % len(self.match_list))  # Console Messaging
 
     def sfm_model_creation(self):
+        print("")
+        message_print("Create Final Model")
+        message_print("Find First Model")
+
         model_ids = []  # the list with all ids that refers to the same point
 
         model_ids_tmp = self.match_list[0].MODEL_ID_LIST()  # Set the point list of the current model to a tmp list
@@ -127,6 +132,8 @@ class SFM:
             model_ids[i][model_curr_image_R.IMG_ID()] = model_ids_tmp[i][1]
             model_pnt_shown.append(1)
 
+        # print(model_ids)
+
         model_points = self.match_list[0].MODEL_POINTS_LIST()  # The list of model points
         model_colors = self.match_list[0].MODEL_COLOR_LIST()  # The list of corresponding colors
 
@@ -136,18 +143,85 @@ class SFM:
             model_curr_image_L = self.match_list[i].IMG_LEFT()  # Set the current left image
             model_curr_image_R = self.match_list[i].IMG_RIGHT()  # Set the current right image
             model_curr_size = len(self.match_list[i].MODEL_POINTS_LIST())  # Find the size of the current model
+            model_curr_points = self.match_list[i].MODEL_POINTS_LIST()
+            model_curr_colors = self.match_list[i].MODEL_COLOR_LIST()
             model_fin_size = len(model_ids)
+
+            print("")
+            message_print("Add Model %s - " % model_curr_image_L.IMG_NAME() +
+                          "%s to Model" % model_curr_image_R.IMG_NAME())
 
             model_fin_m_ids = []
             model_pair_m_ids = []
             for j in range(0, model_curr_size):
                 for k in range(0, model_fin_size):
-                    if model_ids[j][model_curr_image_L.IMG_ID()] == model_ids_tmp[j][0]:
+                    if model_ids[k][model_curr_image_L.IMG_ID()] == model_ids_tmp[j][0]:
                         model_fin_m_ids.append(k)
                         model_pair_m_ids.append(j)
-                    elif model_ids[j][model_curr_image_R.IMG_ID()] == model_ids_tmp[j][1]:
+                        break
+                    elif model_ids[k][model_curr_image_R.IMG_ID()] == model_ids_tmp[j][1]:
                         model_fin_m_ids.append(k)
                         model_pair_m_ids.append(j)
+                        break
+            model_matching_size = len(model_fin_m_ids)
+            if model_matching_size < 5:
+                print("Model cannot be added due to few corresponding points.")
+                break
+
+            # print(model_fin_m_ids)
+            # print(model_pair_m_ids)
+
+            # Find Scale
+            scale: float = 0.0
+            scale_counter: int = 1
+            # print(model_matching_size)
+            if model_matching_size > 10:
+                m_size = 10
+            else:
+                m_size = model_matching_size - 1
+            for j in range(0, m_size-1):
+                for k in range(j+1, m_size):
+                    dx_f = model_points[model_fin_m_ids[j]][0] - model_points[model_fin_m_ids[k]][0]
+                    dy_f = model_points[model_fin_m_ids[j]][1] - model_points[model_fin_m_ids[k]][1]
+                    dz_f = model_points[model_fin_m_ids[j]][2] - model_points[model_fin_m_ids[k]][2]
+
+                    dx_c = model_curr_points[model_pair_m_ids[j]][0] - model_curr_points[model_pair_m_ids[k]][0]
+                    dy_c = model_curr_points[model_pair_m_ids[j]][1] - model_curr_points[model_pair_m_ids[k]][1]
+                    dz_c = model_curr_points[model_pair_m_ids[j]][2] - model_curr_points[model_pair_m_ids[k]][2]
+
+                    dist_f: float = mth.sqrt(dx_f * dx_f + dy_f * dy_f + dz_f * dz_f)
+                    dist_c: float = mth.sqrt(dx_c * dx_c + dy_c * dy_c + dz_c * dz_c)
+
+                    #print(dist_c)
+
+                    scale += (dist_f / dist_c)
+                    scale_counter += 1
+            scale /= scale_counter
+            print(scale)
+
+            # Scale Current model
+            model_curr_scaled_points = []
+            for j in range(0, model_curr_size):
+                x = model_curr_points[j][0] / scale
+                y = model_curr_points[j][1] / scale
+                z = model_curr_points[j][2] / scale
+                tmp = [x, y, z]
+                model_curr_scaled_points.append(tmp)
+
+            # -------------------------------------------- #
+            # print(self.model_coord_list[0])
+            # print(self.model_color_list[0])
+            # print(self.model_coord_id_list[0])
+            export_path = os.path.expanduser("~/Desktop")
+            export_path += "/sfm_tmp/scaled"
+            export_path_norm = os.path.normpath(export_path)
+            if not os.path.exists(export_path_norm):
+                os.mkdir(export_path_norm)
+            export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
+                           + model_curr_image_R.IMG_NAME() + "_scaled.ply"
+            export_path_norm = os.path.normpath(export_path)
+            export_as_ply(model_curr_scaled_points, model_curr_colors, export_path_norm)
+            # -------------------------------------------- #
 
     def sfm_new_entry(self):
         model_new_entry_id = []  # Create an id list for the new entry points
