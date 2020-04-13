@@ -113,20 +113,41 @@ class SFM:
         message_print("Found %d matches." % len(self.match_list))  # Console Messaging
 
     def sfm_model_creation(self):
-        model_points = self.match_list[0].MODEL_POINTS_LIST()  # The list of model points
-        model_colors = self.match_list[0].MODEL_COLOR_LIST()  # The list of corresponding colors
         model_ids = []  # the list with all ids that refers to the same point
 
         model_ids_tmp = self.match_list[0].MODEL_ID_LIST()  # Set the point list of the current model to a tmp list
         model_curr_image_L: Image = self.match_list[0].IMG_LEFT()  # Set the current left image
         model_curr_image_R: Image = self.match_list[0].IMG_RIGHT()  # Set the current right image
         model_curr_size = len(self.match_list[0].MODEL_POINTS_LIST())  # Find the size of the current model
+        model_pnt_shown = []
         for i in range(0, model_curr_size):
             new_entry = self.sfm_new_entry()
             model_ids.append(new_entry)
             model_ids[i][model_curr_image_L.IMG_ID()] = model_ids_tmp[i][0]
             model_ids[i][model_curr_image_R.IMG_ID()] = model_ids_tmp[i][1]
+            model_pnt_shown.append(1)
 
+        model_points = self.match_list[0].MODEL_POINTS_LIST()  # The list of model points
+        model_colors = self.match_list[0].MODEL_COLOR_LIST()  # The list of corresponding colors
+
+        match_list_size = len(self.match_list)
+        for i in range(1, match_list_size):
+            model_ids_tmp = self.match_list[i].MODEL_ID_LIST()  # Set the point list of the current model to a tmp list
+            model_curr_image_L = self.match_list[i].IMG_LEFT()  # Set the current left image
+            model_curr_image_R = self.match_list[i].IMG_RIGHT()  # Set the current right image
+            model_curr_size = len(self.match_list[i].MODEL_POINTS_LIST())  # Find the size of the current model
+            model_fin_size = len(model_ids)
+
+            model_fin_m_ids = []
+            model_pair_m_ids = []
+            for j in range(0, model_curr_size):
+                for k in range(0, model_fin_size):
+                    if model_ids[j][model_curr_image_L.IMG_ID()] == model_ids_tmp[j][0]:
+                        model_fin_m_ids.append(k)
+                        model_pair_m_ids.append(j)
+                    elif model_ids[j][model_curr_image_R.IMG_ID()] == model_ids_tmp[j][1]:
+                        model_fin_m_ids.append(k)
+                        model_pair_m_ids.append(j)
 
     def sfm_new_entry(self):
         model_new_entry_id = []  # Create an id list for the new entry points
