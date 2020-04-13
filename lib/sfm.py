@@ -152,16 +152,26 @@ class SFM:
                           "%s to Model" % model_curr_image_R.IMG_NAME())
 
             model_fin_m_ids = []
+            model_fin_m_points = []
             model_pair_m_ids = []
+            model_pair_m_points = []
             for j in range(0, model_curr_size):
                 for k in range(0, model_fin_size):
                     if model_ids[k][model_curr_image_L.IMG_ID()] == model_ids_tmp[j][0]:
                         model_fin_m_ids.append(k)
                         model_pair_m_ids.append(j)
+                        p_tmp_fin = model_points[k]
+                        p_tmp_curr = model_curr_points[j]
+                        model_fin_m_points.append(p_tmp_fin)
+                        model_pair_m_points.append(p_tmp_curr)
                         break
                     elif model_ids[k][model_curr_image_R.IMG_ID()] == model_ids_tmp[j][1]:
                         model_fin_m_ids.append(k)
                         model_pair_m_ids.append(j)
+                        p_tmp_fin = model_points[k]
+                        p_tmp_curr = model_curr_points[j]
+                        model_fin_m_points.append(p_tmp_fin)
+                        model_pair_m_points.append(p_tmp_curr)
                         break
             model_matching_size = len(model_fin_m_ids)
             if model_matching_size < 5:
@@ -172,41 +182,53 @@ class SFM:
             # print(model_pair_m_ids)
 
             # Find Scale
-            scale: float = 0.0
-            scale_counter: int = 1
-            # print(model_matching_size)
-            if model_matching_size > 10:
-                m_size = 10
-            else:
-                m_size = model_matching_size - 1
-            for j in range(0, m_size-1):
-                for k in range(j+1, m_size):
-                    dx_f = model_points[model_fin_m_ids[j]][0] - model_points[model_fin_m_ids[k]][0]
-                    dy_f = model_points[model_fin_m_ids[j]][1] - model_points[model_fin_m_ids[k]][1]
-                    dz_f = model_points[model_fin_m_ids[j]][2] - model_points[model_fin_m_ids[k]][2]
+            scale, scale_error = find_scale_parameter(model_fin_m_points, model_pair_m_points)
 
-                    dx_c = model_curr_points[model_pair_m_ids[j]][0] - model_curr_points[model_pair_m_ids[k]][0]
-                    dy_c = model_curr_points[model_pair_m_ids[j]][1] - model_curr_points[model_pair_m_ids[k]][1]
-                    dz_c = model_curr_points[model_pair_m_ids[j]][2] - model_curr_points[model_pair_m_ids[k]][2]
+            message_print("Scale Pair Model:")
+            message_print("Scale = %f" % scale)
+            message_print("Scale Error = %f" % scale_error)
 
-                    dist_f: float = mth.sqrt(dx_f * dx_f + dy_f * dy_f + dz_f * dz_f)
-                    dist_c: float = mth.sqrt(dx_c * dx_c + dy_c * dy_c + dz_c * dz_c)
+            X_o_prev = 0.0
+            Y_o_prev = 0.0
+            Z_o_prev = 0.0
 
-                    #print(dist_c)
-
-                    scale += (dist_f / dist_c)
-                    scale_counter += 1
-            scale /= scale_counter
-            print(scale)
+            X_o_new = 0.0
+            Y_o_new = 0.0
+            Z_o_new = 0.0
 
             # Scale Current model
             model_curr_scaled_points = []
             for j in range(0, model_curr_size):
-                x = model_curr_points[j][0] / scale
-                y = model_curr_points[j][1] / scale
-                z = model_curr_points[j][2] / scale
+                X_o_prev += model_curr_points[j][0]
+                Y_o_prev += model_curr_points[j][1]
+                Z_o_prev += model_curr_points[j][2]
+
+                x = model_curr_points[j][0] * scale
+                y = model_curr_points[j][1] * scale
+                z = model_curr_points[j][2] * scale
+
+                X_o_new += x
+                Y_o_new += y
+                Z_o_new += z
+
                 tmp = [x, y, z]
                 model_curr_scaled_points.append(tmp)
+
+            X_o_prev /= model_curr_size
+            Y_o_prev /= model_curr_size
+            Z_o_prev /= model_curr_size
+            X_o_new /= model_curr_size
+            Y_o_new /= model_curr_size
+            Z_o_new /= model_curr_size
+
+            dx = X_o_prev - X_o_new
+            dy = Y_o_prev - Y_o_new
+            dz = Z_o_prev - Z_o_new
+
+            for j in range(0, model_curr_size):
+                model_curr_scaled_points[j][0] += dx
+                model_curr_scaled_points[j][1] += dy
+                model_curr_scaled_points[j][2] += dz
 
             # -------------------------------------------- #
             # print(self.model_coord_list[0])
@@ -222,6 +244,8 @@ class SFM:
             export_path_norm = os.path.normpath(export_path)
             export_as_ply(model_curr_scaled_points, model_curr_colors, export_path_norm)
             # -------------------------------------------- #
+
+
 
     def sfm_new_entry(self):
         model_new_entry_id = []  # Create an id list for the new entry points
