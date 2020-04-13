@@ -7,6 +7,7 @@ import math as mth
 from lib.image import *
 from lib.image_matching import *
 from lib.global_functions import *
+from lib.rigid_transform_3D import *
 
 
 class SFM:
@@ -230,6 +231,12 @@ class SFM:
                 model_curr_scaled_points[j][1] += dy
                 model_curr_scaled_points[j][2] += dz
 
+            # print(len(model_pair_m_points))
+            # print(model_pair_m_points)
+            for j in range(0, model_matching_size):
+                model_pair_m_points[j] = model_curr_scaled_points[model_pair_m_ids[j]]
+            # print(model_pair_m_points)
+
             # -------------------------------------------- #
             # print(self.model_coord_list[0])
             # print(self.model_color_list[0])
@@ -245,7 +252,35 @@ class SFM:
             export_as_ply(model_curr_scaled_points, model_curr_colors, export_path_norm)
             # -------------------------------------------- #
 
+            R, t = rigid_transform_3D(np.transpose(model_fin_m_points), np.transpose(model_pair_m_points))
 
+            message_print("Calculate Rotation & Translation Matrices:")
+            message_print("Rotation = ")
+            print(R)
+            message_print("Translation = ")
+            print(t)
+
+            print(model_curr_scaled_points)
+            A = np.transpose(model_curr_scaled_points)
+            m, n = A.shape
+            B2 = np.dot(R, A) + np.tile(t, (1, n))
+            model_curr_scaled_R_t_points = np.transpose(B2)
+            print(model_curr_scaled_R_t_points)
+
+            # -------------------------------------------- #
+            # print(self.model_coord_list[0])
+            # print(self.model_color_list[0])
+            # print(self.model_coord_id_list[0])
+            export_path = os.path.expanduser("~/Desktop")
+            export_path += "/sfm_tmp/final"
+            export_path_norm = os.path.normpath(export_path)
+            if not os.path.exists(export_path_norm):
+                os.mkdir(export_path_norm)
+            export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
+                           + model_curr_image_R.IMG_NAME() + "_final.ply"
+            export_path_norm = os.path.normpath(export_path)
+            export_as_ply(model_curr_scaled_R_t_points, model_curr_colors, export_path_norm)
+            # -------------------------------------------- #
 
     def sfm_new_entry(self):
         model_new_entry_id = []  # Create an id list for the new entry points

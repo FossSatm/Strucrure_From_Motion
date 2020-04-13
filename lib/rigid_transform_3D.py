@@ -12,6 +12,9 @@ from math import sqrt
 def rigid_transform_3D(A, B):
     assert len(A) == len(B)
 
+    A = np.array(A)
+    B = np.array(B)
+
     num_rows, num_cols = A.shape
     if num_rows != 3:
         raise Exception("matrix A is not 3xN, it is {}x{}".format(num_rows, num_cols))

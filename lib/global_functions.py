@@ -162,7 +162,7 @@ def find_scale_parameter(pnt_cloud_1: [], pnt_cloud_2: []):
 
     scale: float = np.mean(scale_list)
     scale_error: float = np.std(scale_list)
-    print(scale)
-    print(scale_error)
+    # print(scale)
+    # print(scale_error)
 
     return float(scale), float(scale_error)
