@@ -20,6 +20,10 @@ class SFM:
         self.image_list: [] = []  # Create the list of images
         self.match_list: [] = []  # Create the list for image matching
 
+        self.model_id: [] = []
+        self.model_points: [] = []
+        self.model_colors: [] = []
+
     def sfm_run(self, f_src: str, fp_method=FM_AKAZE, set_camera_method=CAM_DEFAULT,
                 match_method=MATCH_FLANN):
         """
@@ -33,6 +37,7 @@ class SFM:
         self.sfm_set_image_list(f_src)  # Open Images
         self.sfm_find_feature_points(flag=fp_method, set_camera_method=set_camera_method)  # Find feature points
         self.sfm_image_matching(match_method=match_method)  # Match Images
+        self.sfm_model_creation()
 
     def sfm_set_image_list(self, f_src):
         """
@@ -106,3 +111,9 @@ class SFM:
                         match_id_counter += 1  # Increment the match id counter
                 loop_counter += 1  # Increment the loop counter
         message_print("Found %d matches." % len(self.match_list))  # Console Messaging
+
+    def sfm_model_creation(self):
+        model_points = self.match_list[0].MODEL_POINTS_LIST
+        model_colors = self.match_list[0].MODEL_COLOR_LIST
+        model_ids = self.match_list[0].MODEL_ID_LIST
+

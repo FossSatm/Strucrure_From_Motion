@@ -33,6 +33,15 @@ class ImageMatching:
     def IMG_RIGHT(self):
         return self.imgR
 
+    def MODEL_ID_LIST(self):
+        return self.model_coord_id_list
+
+    def MODEL_POINTS_LIST(self):
+        return self.model_coord_list
+
+    def MODEL_COLOR_LIST(self):
+        return self.model_color_list
+
     # ------------------ #
     # MATCHING FUNCTIONS #
     # ------------------ #
