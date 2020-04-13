@@ -119,25 +119,28 @@ class SFM:
         message_print("Create Final Model")
         message_print("Find First Model")
 
+        model_curr_points = self.match_list[0].MODEL_POINTS_LIST()  # The list of model points
+        model_curr_colors = self.match_list[0].MODEL_COLOR_LIST()  # The list of corresponding colors
+
+        model_points = []
+        model_colors = []
+
         model_ids = []  # the list with all ids that refers to the same point
 
         model_ids_tmp = self.match_list[0].MODEL_ID_LIST()  # Set the point list of the current model to a tmp list
         model_curr_image_L: Image = self.match_list[0].IMG_LEFT()  # Set the current left image
         model_curr_image_R: Image = self.match_list[0].IMG_RIGHT()  # Set the current right image
         model_curr_size = len(self.match_list[0].MODEL_POINTS_LIST())  # Find the size of the current model
-        model_pnt_shown = []
         for i in range(0, model_curr_size):
+            model_points.append(model_curr_points[i])
+            model_colors.append(model_curr_colors[i])
+
             new_entry = self.sfm_new_entry()
             model_ids.append(new_entry)
             model_ids[i][model_curr_image_L.IMG_ID()] = model_ids_tmp[i][0]
             model_ids[i][model_curr_image_R.IMG_ID()] = model_ids_tmp[i][1]
-            model_pnt_shown.append(1)
 
         # print(model_ids)
-
-        model_points = self.match_list[0].MODEL_POINTS_LIST()  # The list of model points
-        model_colors = self.match_list[0].MODEL_COLOR_LIST()  # The list of corresponding colors
-
         match_list_size = len(self.match_list)
         for i in range(1, match_list_size):
             model_ids_tmp = self.match_list[i].MODEL_ID_LIST()  # Set the point list of the current model to a tmp list
@@ -200,6 +203,7 @@ class SFM:
             # Scale Current model
             model_curr_scaled_points = []
             for j in range(0, model_curr_size):
+
                 X_o_prev += model_curr_points[j][0]
                 Y_o_prev += model_curr_points[j][1]
                 Z_o_prev += model_curr_points[j][2]
@@ -221,7 +225,7 @@ class SFM:
             X_o_new /= model_curr_size
             Y_o_new /= model_curr_size
             Z_o_new /= model_curr_size
-
+            
             dx = X_o_prev - X_o_new
             dy = Y_o_prev - Y_o_new
             dz = Z_o_prev - Z_o_new
@@ -238,21 +242,18 @@ class SFM:
             # print(model_pair_m_points)
 
             # -------------------------------------------- #
-            # print(self.model_coord_list[0])
-            # print(self.model_color_list[0])
-            # print(self.model_coord_id_list[0])
-            export_path = os.path.expanduser("~/Desktop")
-            export_path += "/sfm_tmp/scaled"
-            export_path_norm = os.path.normpath(export_path)
-            if not os.path.exists(export_path_norm):
-                os.mkdir(export_path_norm)
-            export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
-                           + model_curr_image_R.IMG_NAME() + "_scaled.ply"
-            export_path_norm = os.path.normpath(export_path)
-            export_as_ply(model_curr_scaled_points, model_curr_colors, export_path_norm)
+            # export_path = os.path.expanduser("~/Desktop")
+            # export_path += "/sfm_tmp/scaled"
+            # export_path_norm = os.path.normpath(export_path)
+            # if not os.path.exists(export_path_norm):
+            #    os.mkdir(export_path_norm)
+            # export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
+            #               + model_curr_image_R.IMG_NAME() + "_scaled.ply"
+            # export_path_norm = os.path.normpath(export_path)
+            # export_as_ply(model_curr_scaled_points, model_curr_colors, export_path_norm)
             # -------------------------------------------- #
 
-            R, t = rigid_transform_3D(np.transpose(model_fin_m_points), np.transpose(model_pair_m_points))
+            R, t = rigid_transform_3D(np.transpose(model_pair_m_points), np.transpose(model_fin_m_points))
 
             message_print("Calculate Rotation & Translation Matrices:")
             message_print("Rotation = ")
@@ -260,17 +261,15 @@ class SFM:
             message_print("Translation = ")
             print(t)
 
-            print(model_curr_scaled_points)
+            # print(model_curr_scaled_points)
             A = np.transpose(model_curr_scaled_points)
             m, n = A.shape
             B2 = np.dot(R, A) + np.tile(t, (1, n))
             model_curr_scaled_R_t_points = np.transpose(B2)
-            print(model_curr_scaled_R_t_points)
+            # print(model_curr_scaled_R_t_points)
+            model_curr_scaled_points.clear()
 
             # -------------------------------------------- #
-            # print(self.model_coord_list[0])
-            # print(self.model_color_list[0])
-            # print(self.model_coord_id_list[0])
             export_path = os.path.expanduser("~/Desktop")
             export_path += "/sfm_tmp/final"
             export_path_norm = os.path.normpath(export_path)
@@ -281,6 +280,95 @@ class SFM:
             export_path_norm = os.path.normpath(export_path)
             export_as_ply(model_curr_scaled_R_t_points, model_curr_colors, export_path_norm)
             # -------------------------------------------- #
+            model_fin_m_ids.clear()
+            model_fin_m_points.clear()
+            model_pair_m_ids.clear()
+            model_pair_m_points.clear()
+            for j in range(0, model_curr_size):
+                for k in range(0, model_fin_size):
+                    if model_ids[k][model_curr_image_L.IMG_ID()] == model_ids_tmp[j][0]:
+                        model_points[k][0] += model_curr_scaled_R_t_points[j][0]
+                        model_points[k][1] += model_curr_scaled_R_t_points[j][1]
+                        model_points[k][2] += model_curr_scaled_R_t_points[j][2]
+
+                        model_colors[k][0] += model_curr_colors[j][0]
+                        model_colors[k][1] += model_curr_colors[j][1]
+                        model_colors[k][2] += model_curr_colors[j][2]
+
+                        model_points[k][0] /= 2
+                        model_points[k][1] /= 2
+                        model_points[k][2] /= 2
+
+                        model_colors[k][0] /= 2
+                        model_colors[k][1] /= 2
+                        model_colors[k][2] /= 2
+                        break
+                    elif model_ids[k][model_curr_image_R.IMG_ID()] == model_ids_tmp[j][1]:
+                        model_points[k][0] += model_curr_scaled_R_t_points[j][0]
+                        model_points[k][1] += model_curr_scaled_R_t_points[j][1]
+                        model_points[k][2] += model_curr_scaled_R_t_points[j][2]
+
+                        model_colors[k][0] += model_curr_colors[j][0]
+                        model_colors[k][1] += model_curr_colors[j][1]
+                        model_colors[k][2] += model_curr_colors[j][2]
+
+                        model_points[k][0] /= 2
+                        model_points[k][1] /= 2
+                        model_points[k][2] /= 2
+
+                        model_colors[k][0] /= 2
+                        model_colors[k][1] /= 2
+                        model_colors[k][2] /= 2
+                        break
+                    else:
+                        model_points.append(model_curr_scaled_R_t_points[j])
+                        model_colors.append(model_curr_colors[j])
+                        new_entry = self.sfm_new_entry()
+                        model_ids.append(new_entry)
+                        index = len(model_ids) - 1
+                        model_ids[index][model_curr_image_L.IMG_ID()] = model_ids_tmp[j][0]
+                        model_ids[index][model_curr_image_R.IMG_ID()] = model_ids_tmp[j][1]
+                        # print(len(model_points))
+                        break
+
+            model_size = len(model_points)
+            model_points_T = np.transpose(model_points)
+            model_centroid = [np.mean(model_points_T[0]), np.mean(model_points_T[1]), np.mean(model_points_T[2])]
+            model_centroid_err = [np.std(model_points_T[0]), np.std(model_points_T[1]), np.std(model_points_T[2])]
+
+            print(model_centroid)
+            print(model_centroid_err)
+
+            # -------------------------------------------- #
+            export_path = os.path.expanduser("~/Desktop")
+            export_path += "/sfm_tmp/final"
+            export_path_norm = os.path.normpath(export_path)
+            if not os.path.exists(export_path_norm):
+                os.mkdir(export_path_norm)
+            export_path += "/model_" + str(i) + "_final.ply"
+            export_path_norm = os.path.normpath(export_path)
+            export_as_ply(model_points, model_colors, export_path_norm)
+            # -------------------------------------------- #
+
+        self.model_points = model_points
+        self.model_colors = model_colors
+        model_size = len(self.model_points)
+        for i in range(0, model_size):
+            self.model_id.append(i)
+
+        # -------------------------------------------- #
+        # print(self.model_coord_list[0])
+        # print(self.model_color_list[0])
+        # print(self.model_coord_id_list[0])
+        export_path = os.path.expanduser("~/Desktop")
+        export_path += "/sfm_tmp/model"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/model_final.ply"
+        export_path_norm = os.path.normpath(export_path)
+        export_as_ply(self.model_points, self.model_colors, export_path_norm)
+        # -------------------------------------------- #
 
     def sfm_new_entry(self):
         model_new_entry_id = []  # Create an id list for the new entry points

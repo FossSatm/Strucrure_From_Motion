@@ -50,7 +50,7 @@ def rigid_transform_3D(A, B):
     #print(R.shape)
     # X = Rx + t => t = X - Rx
 
-    t = centroid_B + np.dot(-R, centroid_A)
+    t = np.dot(-R, centroid_A) + centroid_B
 
     return R, t
 
