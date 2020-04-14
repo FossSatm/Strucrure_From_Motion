@@ -246,14 +246,14 @@ class ImageMatching:
         # print(self.model_coord_list[0])
         # print(self.model_color_list[0])
         # print(self.model_coord_id_list[0])
-        export_path = os.path.expanduser("~/Desktop")
-        export_path += "/sfm_tmp"
-        export_path_norm = os.path.normpath(export_path)
-        if not os.path.exists(export_path_norm):
-            os.mkdir(export_path_norm)
-        export_path += "/" + self.imgL.IMG_NAME() + "_" + self.imgR.IMG_NAME() + ".ply"
-        export_path_norm = os.path.normpath(export_path)
-        export_as_ply(np.array(self.model_coord_list), np.array(self.model_color_list), export_path_norm)
+        # export_path = os.path.expanduser("~/Desktop")
+        # export_path += "/sfm_tmp"
+        # export_path_norm = os.path.normpath(export_path)
+        # if not os.path.exists(export_path_norm):
+            # os.mkdir(export_path_norm)
+        # export_path += "/" + self.imgL.IMG_NAME() + "_" + self.imgR.IMG_NAME() + ".ply"
+        # export_path_norm = os.path.normpath(export_path)
+        # export_as_ply(np.array(self.model_coord_list), np.array(self.model_color_list), export_path_norm)
         # -------------------------------------------- #
 
         return True
