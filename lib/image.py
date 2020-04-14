@@ -16,6 +16,11 @@ CAM_DEFAULT = 0
 CAM_APPROXIMATE = 1
 CAM_FROM_FILE = 2
 
+Q_LOW = 1024
+Q_MEDIUM = 2048
+Q_HIGH = 8192
+Q_EXTREME = 1000000
+
 
 class Image:
     """
@@ -165,8 +170,9 @@ class Image:
         else:  # else Set the default parameters
             self.camera.set_camera_parameters()
 
-    def img_find_features(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT):
+    def img_find_features(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT, set_quality=Q_HIGH):
         """
+        :param set_quality:
         :param set_camera_method:
         :param flag:
         :return:
@@ -182,6 +188,7 @@ class Image:
             method = cv.AKAZE_create()
 
         img = cv.imread(self.src)  # open image as grayscale
+        img = downsample_image(img, set_quality)  # downsample image to the given quality
         img_size = img.shape  # take the shape of image (height x width x channels)
         self.width = img_size[1]  # set width
         self.height = img_size[0]  # set height
@@ -211,3 +218,32 @@ class Image:
         self.feature_list = feat_list
         self.feature_colors = color_list
         self.feature_ids = feat_ids
+
+def downsample_image(image, set_quality):
+
+    img_size = image.shape
+    width = img_size[1]
+    height = img_size[0]
+
+    if width < set_quality and height < set_quality:
+        return image
+
+    image_down = image
+
+    # Check if width is greater than height
+    if width >= height:
+        while width > set_quality:
+            image_down = cv.pyrDown(image_down, dstsize=(width // 2, height // 2))
+            img_size = image_down.shape
+            width = img_size[1]
+            height = img_size[0]
+
+    # Check if height is greater than width
+    else:
+        while height > set_quality:
+            image_down = cv.pyrDown(image_down, dstsize=(width // 2, height // 2))
+            img_size = image_down.shape
+            width = img_size[1]
+            height = img_size[0]
+
+    return image_down

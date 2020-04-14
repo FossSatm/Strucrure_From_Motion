@@ -27,9 +27,10 @@ class SFM:
         self.model_colors: [] = []
 
     def sfm_run(self, f_src: str, fp_method=FM_AKAZE, set_camera_method=CAM_DEFAULT,
-                match_method=MATCH_FLANN):
+                match_method=MATCH_FLANN, set_quality=Q_HIGH):
         """
         Main SFM routine.
+        :param set_quality:
         :param f_src: The folder source which contains the images
         :param fp_method: The feature point extraction method
         :param set_camera_method: The method for calculate camera parameters
@@ -37,7 +38,8 @@ class SFM:
         :return: Nothing
         """
         self.sfm_set_image_list(f_src)  # Open Images
-        self.sfm_find_feature_points(flag=fp_method, set_camera_method=set_camera_method)  # Find feature points
+        self.sfm_find_feature_points(flag=fp_method, set_camera_method=set_camera_method,
+                                     set_quality=set_quality)  # Find feature points
         self.sfm_image_matching(match_method=match_method)  # Match Images
         self.sfm_model_creation()
 
@@ -68,7 +70,7 @@ class SFM:
         # print(self.image_list[0].INFO())
         # -------------------------------------------- #
 
-    def sfm_find_feature_points(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT):
+    def sfm_find_feature_points(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT, set_quality=Q_HIGH):
         """
         The routine for finding the feature points.
         :param flag: Feature points flag
@@ -77,7 +79,8 @@ class SFM:
         """
         for img in self.image_list:  # For all images in image list
             message_print("FIND FEATURE POINTS FOR IMAGE: %s" % img.IMG_NAME())  # Console Message
-            img.img_find_features(flag=flag, set_camera_method=set_camera_method)  # Find Feature Method
+            img.img_find_features(flag=flag, set_camera_method=set_camera_method,
+                                  set_quality=set_quality)  # Find Feature Method
             message_print(img.INFO())  # Print image information
             # print(img.INFO_DEBUGGING())  # Print debugging image information
 
