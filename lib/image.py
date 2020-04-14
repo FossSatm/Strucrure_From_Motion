@@ -226,7 +226,7 @@ def downsample_image(image, set_quality):
     width = img_size[1]
     height = img_size[0]
 
-    if width < set_quality and height < set_quality:
+    if width <= set_quality and height <= set_quality:
         return image
 
     image_down = image
