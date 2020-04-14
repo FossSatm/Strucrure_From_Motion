@@ -1,7 +1,9 @@
 from lib.sfm import *
 
-path = "C:/Users/kavou/Desktop/data/video_frames/Talud_A2_01/"  # Give a path
+#path = "C:/Users/kavou/Desktop/data/video_frames/Talud_A2_01/"  # Give a path
 #path = "/home/johncrabs/Desktop/img_tmp/Talud_A2_01/"
+path = "/home/johncrabs/Desktop/CalibData/RedMi_Test/"
+
 
 sfm = SFM()  # Create SFM() object
 # Run SFM

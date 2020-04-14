@@ -200,174 +200,173 @@ class SFM:
             model_matching_size = len(model_fin_m_ids)
             if model_matching_size < 5:
                 print("Model cannot be added due to few corresponding points.")
-                break
+            else:
+                # print(model_fin_m_ids)
+                # print(model_pair_m_ids)
 
-            # print(model_fin_m_ids)
-            # print(model_pair_m_ids)
+                # Find Scale
+                scale, scale_error = find_scale_parameter(model_fin_m_points, model_pair_m_points)
 
-            # Find Scale
-            scale, scale_error = find_scale_parameter(model_fin_m_points, model_pair_m_points)
-
-            message_print("Scale Pair Model:")
-            message_print("Scale = %f" % scale)
-            message_print("Scale Error = %f" % scale_error)
-
-            """
-            X_o_prev = 0.0
-            Y_o_prev = 0.0
-            Z_o_prev = 0.0
-
-            X_o_new = 0.0
-            Y_o_new = 0.0
-            Z_o_new = 0.0
-            """
-
-            # Scale Current model
-            model_curr_scaled_points = []
-            for j in range(0, model_curr_size):
-                """
-                X_o_prev += model_curr_points[j][0]
-                Y_o_prev += model_curr_points[j][1]
-                Z_o_prev += model_curr_points[j][2]
-                """
-
-                x = model_curr_points[j][0] * scale
-                y = model_curr_points[j][1] * scale
-                z = model_curr_points[j][2] * scale
-                tmp = [x, y, z]
-                model_curr_scaled_points.append(tmp)
+                message_print("Scale Pair Model:")
+                message_print("Scale = %f" % scale)
+                message_print("Scale Error = %f" % scale_error)
 
                 """
-                X_o_new += x
-                Y_o_new += y
-                Z_o_new += z
-            X_o_prev /= model_curr_size
-            Y_o_prev /= model_curr_size
-            Z_o_prev /= model_curr_size
-            X_o_new /= model_curr_size
-            Y_o_new /= model_curr_size
-            Z_o_new /= model_curr_size
-            
-            dx = X_o_prev - X_o_new
-            dy = Y_o_prev - Y_o_new
-            dz = Z_o_prev - Z_o_new
+                X_o_prev = 0.0
+                Y_o_prev = 0.0
+                Z_o_prev = 0.0
+    
+                X_o_new = 0.0
+                Y_o_new = 0.0
+                Z_o_new = 0.0
+                """
 
-            for j in range(0, model_curr_size):
-                model_curr_scaled_points[j][0] += dx
-                model_curr_scaled_points[j][1] += dy
-                model_curr_scaled_points[j][2] += dz
-            """
-            # print(len(model_pair_m_points))
-            # print(model_pair_m_points)
-            for j in range(0, model_matching_size):
-                model_pair_m_points[j] = model_curr_scaled_points[model_pair_m_ids[j]]
-            # print(model_pair_m_points)
+                # Scale Current model
+                model_curr_scaled_points = []
+                for j in range(0, model_curr_size):
+                    """
+                    X_o_prev += model_curr_points[j][0]
+                    Y_o_prev += model_curr_points[j][1]
+                    Z_o_prev += model_curr_points[j][2]
+                    """
 
-            # -------------------------------------------- #
-            # Uncomment the following lines for debugging. #
-            # -------------------------------------------- #
-            # export_path = os.path.expanduser("~/Desktop")
-            # export_path += "/sfm_tmp/scaled"
-            # export_path_norm = os.path.normpath(export_path)
-            # if not os.path.exists(export_path_norm):
-            #    os.mkdir(export_path_norm)
-            # export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
-            #               + model_curr_image_R.IMG_NAME() + "_scaled.ply"
-            # export_path_norm = os.path.normpath(export_path)
-            # export_as_ply(model_curr_scaled_points, model_curr_colors, export_path_norm)
-            # -------------------------------------------- #
+                    x = model_curr_points[j][0] * scale
+                    y = model_curr_points[j][1] * scale
+                    z = model_curr_points[j][2] * scale
+                    tmp = [x, y, z]
+                    model_curr_scaled_points.append(tmp)
 
-            R, t = rigid_transform_3D(np.transpose(model_pair_m_points), np.transpose(model_fin_m_points))
+                    """
+                    X_o_new += x
+                    Y_o_new += y
+                    Z_o_new += z
+                X_o_prev /= model_curr_size
+                Y_o_prev /= model_curr_size
+                Z_o_prev /= model_curr_size
+                X_o_new /= model_curr_size
+                Y_o_new /= model_curr_size
+                Z_o_new /= model_curr_size
+                
+                dx = X_o_prev - X_o_new
+                dy = Y_o_prev - Y_o_new
+                dz = Z_o_prev - Z_o_new
+    
+                for j in range(0, model_curr_size):
+                    model_curr_scaled_points[j][0] += dx
+                    model_curr_scaled_points[j][1] += dy
+                    model_curr_scaled_points[j][2] += dz
+                """
+                # print(len(model_pair_m_points))
+                # print(model_pair_m_points)
+                for j in range(0, model_matching_size):
+                    model_pair_m_points[j] = model_curr_scaled_points[model_pair_m_ids[j]]
+                # print(model_pair_m_points)
 
-            message_print("Calculate Rotation & Translation Matrices:")
-            message_print("Rotation = ")
-            print(R)
-            message_print("Translation = ")
-            print(t)
+                # -------------------------------------------- #
+                # Uncomment the following lines for debugging. #
+                # -------------------------------------------- #
+                # export_path = os.path.expanduser("~/Desktop")
+                # export_path += "/sfm_tmp/scaled"
+                # export_path_norm = os.path.normpath(export_path)
+                # if not os.path.exists(export_path_norm):
+                #    os.mkdir(export_path_norm)
+                # export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
+                #               + model_curr_image_R.IMG_NAME() + "_scaled.ply"
+                # export_path_norm = os.path.normpath(export_path)
+                # export_as_ply(model_curr_scaled_points, model_curr_colors, export_path_norm)
+                # -------------------------------------------- #
 
-            # print(model_curr_scaled_points)
-            A = np.transpose(model_curr_scaled_points)
-            m, n = A.shape
-            B2 = np.dot(R, A) + np.tile(t, (1, n))
-            model_curr_scaled_R_t_points = np.transpose(B2)
-            # print(model_curr_scaled_R_t_points)
-            model_curr_scaled_points.clear()
+                R, t = rigid_transform_3D(np.transpose(model_pair_m_points), np.transpose(model_fin_m_points))
 
-            # -------------------------------------------- #
-            export_path = os.path.expanduser("~/Desktop")
-            export_path += "/sfm_tmp/"
-            export_path_norm = os.path.normpath(export_path)
-            if not os.path.exists(export_path_norm):
-                os.mkdir(export_path_norm)
-            export_path += "/final"
-            export_path_norm = os.path.normpath(export_path)
-            if not os.path.exists(export_path_norm):
-                os.mkdir(export_path_norm)
-            export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
-                           + model_curr_image_R.IMG_NAME() + "_final.ply"
-            export_path_norm = os.path.normpath(export_path)
-            export_as_ply(model_curr_scaled_R_t_points, model_curr_colors, export_path_norm)
-            # -------------------------------------------- #
-            model_fin_m_ids.clear()
-            model_fin_m_points.clear()
-            model_pair_m_ids.clear()
-            model_pair_m_points.clear()
+                message_print("Calculate Rotation & Translation Matrices:")
+                message_print("Rotation = ")
+                print(R)
+                message_print("Translation = ")
+                print(t)
 
-            for j in range(0, model_curr_size):
-                if model_fin_pair_m_ids[j][0] == -1:
-                    model_points.append(model_curr_scaled_R_t_points[j])
-                    model_colors.append(model_curr_colors[j])
-                    new_entry = self.sfm_new_entry()
-                    model_ids.append(new_entry)
-                    index = len(model_ids) - 1
-                    model_ids[index][model_curr_image_L.IMG_ID()] = model_ids_tmp[j][0]
-                    model_ids[index][model_curr_image_R.IMG_ID()] = model_ids_tmp[j][1]
-                else:
-                    k_ind = model_fin_pair_m_ids[j][0]
-                    l_ind = model_fin_pair_m_ids[j][1]
-                    model_points[k_ind][0] += model_curr_scaled_R_t_points[l_ind][0]
-                    model_points[k_ind][1] += model_curr_scaled_R_t_points[l_ind][1]
-                    model_points[k_ind][2] += model_curr_scaled_R_t_points[l_ind][2]
+                # print(model_curr_scaled_points)
+                A = np.transpose(model_curr_scaled_points)
+                m, n = A.shape
+                B2 = np.dot(R, A) + np.tile(t, (1, n))
+                model_curr_scaled_R_t_points = np.transpose(B2)
+                # print(model_curr_scaled_R_t_points)
+                model_curr_scaled_points.clear()
 
-                    model_colors[k_ind][0] += model_curr_colors[l_ind][0]
-                    model_colors[k_ind][1] += model_curr_colors[l_ind][1]
-                    model_colors[k_ind][2] += model_curr_colors[l_ind][2]
+                # -------------------------------------------- #
+                export_path = os.path.expanduser("~/Desktop")
+                export_path += "/sfm_tmp/"
+                export_path_norm = os.path.normpath(export_path)
+                if not os.path.exists(export_path_norm):
+                    os.mkdir(export_path_norm)
+                export_path += "/final"
+                export_path_norm = os.path.normpath(export_path)
+                if not os.path.exists(export_path_norm):
+                    os.mkdir(export_path_norm)
+                export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
+                               + model_curr_image_R.IMG_NAME() + "_final.ply"
+                export_path_norm = os.path.normpath(export_path)
+                export_as_ply(model_curr_scaled_R_t_points, model_curr_colors, export_path_norm)
+                # -------------------------------------------- #
+                model_fin_m_ids.clear()
+                model_fin_m_points.clear()
+                model_pair_m_ids.clear()
+                model_pair_m_points.clear()
 
-                    model_points[k_ind][0] /= 2
-                    model_points[k_ind][1] /= 2
-                    model_points[k_ind][2] /= 2
+                for j in range(0, model_curr_size):
+                    if model_fin_pair_m_ids[j][0] == -1:
+                        model_points.append(model_curr_scaled_R_t_points[j])
+                        model_colors.append(model_curr_colors[j])
+                        new_entry = self.sfm_new_entry()
+                        model_ids.append(new_entry)
+                        index = len(model_ids) - 1
+                        model_ids[index][model_curr_image_L.IMG_ID()] = model_ids_tmp[j][0]
+                        model_ids[index][model_curr_image_R.IMG_ID()] = model_ids_tmp[j][1]
+                    else:
+                        k_ind = model_fin_pair_m_ids[j][0]
+                        l_ind = model_fin_pair_m_ids[j][1]
+                        model_points[k_ind][0] += model_curr_scaled_R_t_points[l_ind][0]
+                        model_points[k_ind][1] += model_curr_scaled_R_t_points[l_ind][1]
+                        model_points[k_ind][2] += model_curr_scaled_R_t_points[l_ind][2]
 
-                    model_colors[k_ind][0] /= 2
-                    model_colors[k_ind][1] /= 2
-                    model_colors[k_ind][2] /= 2
+                        model_colors[k_ind][0] += model_curr_colors[l_ind][0]
+                        model_colors[k_ind][1] += model_curr_colors[l_ind][1]
+                        model_colors[k_ind][2] += model_curr_colors[l_ind][2]
 
-            model_size = len(model_points)
-            model_points_T = np.transpose(model_points)
-            model_centroid = [np.mean(model_points_T[0]), np.mean(model_points_T[1]), np.mean(model_points_T[2])]
-            model_centroid_err = [np.std(model_points_T[0]), np.std(model_points_T[1]), np.std(model_points_T[2])]
+                        model_points[k_ind][0] /= 2
+                        model_points[k_ind][1] /= 2
+                        model_points[k_ind][2] /= 2
 
-            message_print("New model size = %d" % model_size)
-            message_print("New model centroid = ")
-            print(model_centroid)
-            message_print("New model centroid errors = ")
-            print(model_centroid_err)
+                        model_colors[k_ind][0] /= 2
+                        model_colors[k_ind][1] /= 2
+                        model_colors[k_ind][2] /= 2
 
-            # -------------------------------------------- #
-            # Uncomment the following lines for debugging. #
-            # -------------------------------------------- #
-            export_path = os.path.expanduser("~/Desktop")
-            export_path += "/sfm_tmp/"
-            export_path_norm = os.path.normpath(export_path)
-            if not os.path.exists(export_path_norm):
-                os.mkdir(export_path_norm)
-            export_path += "/final"
-            export_path_norm = os.path.normpath(export_path)
-            if not os.path.exists(export_path_norm):
-                os.mkdir(export_path_norm)
-            export_path += "/model_" + str(i) + "_final.ply"
-            export_path_norm = os.path.normpath(export_path)
-            export_as_ply(model_points, model_colors, export_path_norm)
-            # -------------------------------------------- #
+                model_size = len(model_points)
+                model_points_T = np.transpose(model_points)
+                model_centroid = [np.mean(model_points_T[0]), np.mean(model_points_T[1]), np.mean(model_points_T[2])]
+                model_centroid_err = [np.std(model_points_T[0]), np.std(model_points_T[1]), np.std(model_points_T[2])]
+
+                message_print("New model size = %d" % model_size)
+                message_print("New model centroid = ")
+                print(model_centroid)
+                message_print("New model centroid errors = ")
+                print(model_centroid_err)
+
+                # -------------------------------------------- #
+                # Uncomment the following lines for debugging. #
+                # -------------------------------------------- #
+                export_path = os.path.expanduser("~/Desktop")
+                export_path += "/sfm_tmp/"
+                export_path_norm = os.path.normpath(export_path)
+                if not os.path.exists(export_path_norm):
+                    os.mkdir(export_path_norm)
+                export_path += "/final"
+                export_path_norm = os.path.normpath(export_path)
+                if not os.path.exists(export_path_norm):
+                    os.mkdir(export_path_norm)
+                export_path += "/model_" + str(i) + "_final.ply"
+                export_path_norm = os.path.normpath(export_path)
+                export_as_ply(model_points, model_colors, export_path_norm)
+                # -------------------------------------------- #
 
         self.model_points = model_points
         self.model_colors = model_colors
