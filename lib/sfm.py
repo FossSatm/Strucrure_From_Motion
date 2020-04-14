@@ -328,54 +328,6 @@ class SFM:
                     model_colors[k_ind][0] /= 2
                     model_colors[k_ind][1] /= 2
                     model_colors[k_ind][2] /= 2
-            """
-            for j in range(0, model_curr_size):
-                for k in range(0, model_fin_size):
-                    if model_ids[k][model_curr_image_L.IMG_ID()] == model_ids_tmp[j][0]:
-                        model_points[k][0] += model_curr_scaled_R_t_points[j][0]
-                        model_points[k][1] += model_curr_scaled_R_t_points[j][1]
-                        model_points[k][2] += model_curr_scaled_R_t_points[j][2]
-
-                        model_colors[k][0] += model_curr_colors[j][0]
-                        model_colors[k][1] += model_curr_colors[j][1]
-                        model_colors[k][2] += model_curr_colors[j][2]
-
-                        model_points[k][0] /= 2
-                        model_points[k][1] /= 2
-                        model_points[k][2] /= 2
-
-                        model_colors[k][0] /= 2
-                        model_colors[k][1] /= 2
-                        model_colors[k][2] /= 2
-                        break
-                    elif model_ids[k][model_curr_image_R.IMG_ID()] == model_ids_tmp[j][1]:
-                        model_points[k][0] += model_curr_scaled_R_t_points[j][0]
-                        model_points[k][1] += model_curr_scaled_R_t_points[j][1]
-                        model_points[k][2] += model_curr_scaled_R_t_points[j][2]
-
-                        model_colors[k][0] += model_curr_colors[j][0]
-                        model_colors[k][1] += model_curr_colors[j][1]
-                        model_colors[k][2] += model_curr_colors[j][2]
-
-                        model_points[k][0] /= 2
-                        model_points[k][1] /= 2
-                        model_points[k][2] /= 2
-
-                        model_colors[k][0] /= 2
-                        model_colors[k][1] /= 2
-                        model_colors[k][2] /= 2
-                        break
-                    else:
-                        model_points.append(model_curr_scaled_R_t_points[j])
-                        model_colors.append(model_curr_colors[j])
-                        new_entry = self.sfm_new_entry()
-                        model_ids.append(new_entry)
-                        index = len(model_ids) - 1
-                        model_ids[index][model_curr_image_L.IMG_ID()] = model_ids_tmp[j][0]
-                        model_ids[index][model_curr_image_R.IMG_ID()] = model_ids_tmp[j][1]
-                        # print(len(model_points))
-                        break
-            """
 
             model_size = len(model_points)
             model_points_T = np.transpose(model_points)
