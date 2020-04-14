@@ -157,21 +157,25 @@ class Image:
         self.img_name = basename[0]  # Set the image name
         self.img_suffix = basename[1]  # Set the suffix
 
-    def img_set_camera(self, flag=CAM_DEFAULT):
+    def img_set_camera(self, flag=CAM_DEFAULT, camera_approximate_method=APPROXIMATE_WIDTH_HEIGHT):
         """
         Set Camera routine.
+        :param camera_approximate_method:
         :param flag: The method for which will be used for camera setting
         :return: Nothing
         """
         if flag == CAM_APPROXIMATE:  # if Camera Approximate
-            self.camera.camera_approximate_parameters(self.width, self.height)  # Approximate the camera parameters
+            # Approximate the camera parameters
+            self.camera.camera_approximate_parameters(self.width, self.height, camera_approximate_method)
         elif flag == CAM_FROM_FILE:  # elsif Camera From File (take the parameters from file)
             pass
         else:  # else Set the default parameters
             self.camera.set_camera_parameters()
 
-    def img_find_features(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT, set_quality=Q_HIGH):
+    def img_find_features(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT, set_quality=Q_HIGH,
+                          camera_approximate_method=APPROXIMATE_WIDTH_HEIGHT):
         """
+        :param camera_approximate_method:
         :param set_quality:
         :param set_camera_method:
         :param flag:
@@ -196,7 +200,8 @@ class Image:
         if len(img_size) == 3:  # check if image is really grayscale
             self.channels = img_size[2]  # if not grayscale take the size of channels
 
-        self.img_set_camera(flag=set_camera_method)  # Set camera using the given method
+        # Set camera using the given method
+        self.img_set_camera(flag=set_camera_method, camera_approximate_method=camera_approximate_method)
 
         img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)  # Transform image to grayscale
         kp, descr = method.detectAndCompute(img, None)  # detect and compute keypoints

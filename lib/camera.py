@@ -1,6 +1,8 @@
 # Python Libraries #
 import numpy as np
 
+APPROXIMATE_WIDTH_HEIGHT = 0
+APPROXIMATE_DIAGONAL = 1
 
 class Camera:
     """
@@ -49,32 +51,39 @@ class Camera:
         self.cx = cx  # Set cx
         self.cy = cy  # Set cy
 
-    def approximate_focal_length(self, width, height):
+    def approximate_focal_length(self, width, height, flag=APPROXIMATE_WIDTH_HEIGHT):
         """
         Approximate the focal length using the following statement:
             0.7w <= f <= w
         We assume the f is the half of (0.7w + w). This gives the highest possibility to be as close as we can to
         the real focal length.
         As w we take the bigger size of the image.
+        :param flag:
         :param width: The width of the image (in pixel)
         :param height: The height of the image (in pixel)
         :return: focal
         """
-        if width > height:  # Check id width > height
-            w = width  # Set w = width
-        else:  # else
-            w = height  # w = height
-        focal = (0.7 * w + w) / 2  # Approximate the focal length as the the average of (70% of w + 100% of w)
+        if flag == APPROXIMATE_DIAGONAL:
+            diagonal = np.sqrt(width*width + height*height)
+            focal = diagonal*0.85
+        else:
+            if width > height:  # Check id width > height
+                w = width  # Set w = width
+            else:  # else
+                w = height  # w = height
+            focal = (0.7 * w + w) / 2  # Approximate the focal length as the the average of (70% of w + 100% of w)
+
         return focal
 
-    def camera_approximate_parameters(self, width: int, height: int):
+    def camera_approximate_parameters(self, width: int, height: int, flag=APPROXIMATE_WIDTH_HEIGHT):
         """
         Approximate the camera parameters using the width or height of the image.
+        :param flag:
         :param width: The width of the image (in pixel)
         :param height: The height of the image (in pixel)
         :return: Nothing
         """
-        focal = self.approximate_focal_length(width, height)  # Find the focal length
+        focal = self.approximate_focal_length(width, height, flag)  # Find the focal length
         self.fx = focal  # We assume the pixel is square and set the same focal as fy
         self.fy = focal  # We assume the pixel is square and set the same focal as fx
         self.cx = width / 2  # Take the half width as center_x coordinate

@@ -9,6 +9,10 @@ from lib.image_matching import *
 from lib.global_functions import *
 from lib.rigid_transform_3D import *
 
+FAST_MATCH = 0
+FAST_MEDIUM_MATCH = 1
+MEDIUM_SPEED_MATCH = 2
+SLOW_MATCH = 3
 
 class SFM:
     """
@@ -27,9 +31,11 @@ class SFM:
         self.model_colors: [] = []
 
     def sfm_run(self, f_src: str, fp_method=FM_AKAZE, set_camera_method=CAM_DEFAULT,
-                match_method=MATCH_FLANN, set_quality=Q_HIGH):
+                match_method=MATCH_FLANN, speed_match=MEDIUM_SPEED_MATCH, set_quality=Q_HIGH,
+                camera_approximate_method=APPROXIMATE_WIDTH_HEIGHT):
         """
         Main SFM routine.
+        :param speed_match:
         :param set_quality:
         :param f_src: The folder source which contains the images
         :param fp_method: The feature point extraction method
@@ -39,8 +45,16 @@ class SFM:
         """
         self.sfm_set_image_list(f_src)  # Open Images
         self.sfm_find_feature_points(flag=fp_method, set_camera_method=set_camera_method,
-                                     set_quality=set_quality)  # Find feature points
-        self.sfm_image_matching(match_method=match_method)  # Match Images
+                                     set_quality=set_quality,
+                                     camera_approximate_method=camera_approximate_method)  # Find feature points
+        if speed_match == FAST_MATCH:
+            self.sfm_image_matching_fast(match_method=match_method)  # Match Images
+        elif speed_match == FAST_MEDIUM_MATCH:
+            self.sfm_image_matching_fast_medium(match_method=match_method)  # Match Images
+        elif speed_match == SLOW_MATCH:
+            self.sfm_image_matching_slow(match_method=match_method)  # Match Images
+        else:
+            self.sfm_image_matching_medium(match_method=match_method)  # Match Images
         self.sfm_model_creation()
 
     def sfm_set_image_list(self, f_src):
@@ -53,6 +67,7 @@ class SFM:
         for suffix in self.ALL_SUPPORTED_FORMATS_LIST:  # For all supported suffixes
             imgs_src = os.path.normpath(f_src) + os.path.normpath("/" + suffix)  # Set the searching path
             img_files_path = glob.glob(imgs_src)  # Take all image paths with selected suffix
+            img_files_path.sort()
             for path in img_files_path:  # For all paths in img_file_path
                 img_tmp = Image()  # Create temporary Image() instance
                 img_tmp.img_open_image(path, img_id=img_id_counter)  # Open the image (write the path information)
@@ -70,9 +85,11 @@ class SFM:
         # print(self.image_list[0].INFO())
         # -------------------------------------------- #
 
-    def sfm_find_feature_points(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT, set_quality=Q_HIGH):
+    def sfm_find_feature_points(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT, set_quality=Q_HIGH,
+                                camera_approximate_method=APPROXIMATE_WIDTH_HEIGHT):
         """
         The routine for finding the feature points.
+        :param camera_approximate_method:
         :param set_quality:
         :param flag: Feature points flag
         :param set_camera_method: Camera setting method
@@ -81,11 +98,76 @@ class SFM:
         for img in self.image_list:  # For all images in image list
             message_print("FIND FEATURE POINTS FOR IMAGE: %s" % img.IMG_NAME())  # Console Message
             img.img_find_features(flag=flag, set_camera_method=set_camera_method,
-                                  set_quality=set_quality)  # Find Feature Method
+                                  set_quality=set_quality, camera_approximate_method=camera_approximate_method)  # Find Feature Method
             message_print(img.INFO())  # Print image information
             # print(img.INFO_DEBUGGING())  # Print debugging image information
 
-    def sfm_image_matching(self, match_method=MATCH_FLANN):
+    def sfm_image_matching_fast(self, match_method=MATCH_FLANN):
+        """
+        The routine for image matching.
+        :return: Nothing
+        """
+        image_list_size = len(self.image_list)  # Take the size of the image list (the number of images in list)
+        matchSize = image_list_size - 1  # Set a matchSize counter
+        loop_counter = 1  # Create a loop counter for message printing
+        match_id_counter = 0  # Create a counter for keeping track the match id
+        for index_L in range(0, image_list_size-1):  # For all images which can be left (0, N-1)
+            index_R = index_L+1
+            # Console Messaging
+            print("\n")
+            message_print("(%d / " % loop_counter + "%d) " % matchSize
+                          + "MATCH IMAGES %s & " % self.image_list[index_L].IMG_NAME()
+                          + "%s" % self.image_list[index_R].IMG_NAME())
+            m_img = ImageMatching()  # Create an ImageMatching object
+            # Set the images info
+            m_img.m_img_set_images(self.image_list[index_L], self.image_list[index_R], match_id_counter)
+            if match_method == MATCH_BRUTEFORCE_HAMMING:  # If Bruteforce Matching
+                if m_img.m_img_match_images_bruteforce_hamming():  # If images can be matched
+                    self.match_list.append(m_img)  # Append the match to list
+                    match_id_counter += 1  # Increment the match id counter
+            else:  # Else run flann matching
+                if m_img.m_img_match_images_flann():  # If images can be matched
+                    self.match_list.append(m_img)  # Append the match to list
+                    match_id_counter += 1  # Increment the match id counter
+            loop_counter += 1  # Increment the loop counter
+        print("")
+        message_print("Found %d matches." % len(self.match_list))  # Console Messaging
+
+    def sfm_image_matching_fast_medium(self, match_method=MATCH_FLANN):
+        """
+        The routine for image matching.
+        :return: Nothing
+        """
+        image_list_size = len(self.image_list)  # Take the size of the image list (the number of images in list)
+        matchSize = image_list_size - 1  # Set a matchSize counter
+        loop_counter = 1  # Create a loop counter for message printing
+        match_id_counter = 0  # Create a counter for keeping track the match id
+        for index_L in range(0, image_list_size-1):  # For all images which can be left (0, N-1)
+            for index_R in range(index_L + 1, image_list_size):  # For all images which can be right (1, N)
+                # Console Messaging
+                print("\n")
+                message_print("(%d / " % loop_counter + "%d) " % matchSize
+                              + "MATCH IMAGES %s & " % self.image_list[index_L].IMG_NAME()
+                              + "%s" % self.image_list[index_R].IMG_NAME())
+
+                m_img = ImageMatching()  # Create an ImageMatching object
+                # Set the images info
+                m_img.m_img_set_images(self.image_list[index_L], self.image_list[index_R], match_id_counter)
+                if match_method == MATCH_BRUTEFORCE_HAMMING:  # If Bruteforce Matching
+                    if m_img.m_img_match_images_bruteforce_hamming():  # If images can be matched
+                        self.match_list.append(m_img)  # Append the match to list
+                        match_id_counter += 1  # Increment the match id counter
+                        break
+                else:  # Else run flann matching
+                    if m_img.m_img_match_images_flann():  # If images can be matched
+                        self.match_list.append(m_img)  # Append the match to list
+                        match_id_counter += 1  # Increment the match id counter
+                        break
+            loop_counter += 1  # Increment the loop counter
+        print("")
+        message_print("Found %d matches." % len(self.match_list))  # Console Messaging
+
+    def sfm_image_matching_medium(self, match_method=MATCH_FLANN):
         """
         The routine for image matching.
         :return: Nothing
@@ -116,6 +198,39 @@ class SFM:
                         self.match_list.append(m_img)  # Append the match to list
                         match_id_counter += 1  # Increment the match id counter
                 loop_counter += 1  # Increment the loop counter
+        print("")
+        message_print("Found %d matches." % len(self.match_list))  # Console Messaging
+
+    def sfm_image_matching_slow(self, match_method=MATCH_FLANN):
+        """
+        The routine for image matching.
+        :return: Nothing
+        """
+        image_list_size = len(self.image_list)  # Take the size of the image list (the number of images in list)
+        matchSize = image_list_size * image_list_size  # Perform the previous equation
+        loop_counter = 1  # Create a loop counter for message printing
+        match_id_counter = 0  # Create a counter for keeping track the match id
+        for index_L in range(0, image_list_size):  # For all images which can be left (0, N-1)
+            for index_R in range(0, image_list_size):
+                # Console Messaging
+                print("\n")
+                message_print("(%d / " % loop_counter + "%d) " % matchSize
+                              + "MATCH IMAGES %s & " % self.image_list[index_L].IMG_NAME()
+                              + "%s" % self.image_list[index_R].IMG_NAME())
+
+                m_img = ImageMatching()  # Create an ImageMatching object
+                # Set the images info
+                m_img.m_img_set_images(self.image_list[index_L], self.image_list[index_R], match_id_counter)
+                if match_method == MATCH_BRUTEFORCE_HAMMING:  # If Bruteforce Matching
+                    if m_img.m_img_match_images_bruteforce_hamming():  # If images can be matched
+                        self.match_list.append(m_img)  # Append the match to list
+                        match_id_counter += 1  # Increment the match id counter
+                else:  # Else run flann matching
+                    if m_img.m_img_match_images_flann():  # If images can be matched
+                        self.match_list.append(m_img)  # Append the match to list
+                        match_id_counter += 1  # Increment the match id counter
+                loop_counter += 1  # Increment the loop counter
+        print("")
         message_print("Found %d matches." % len(self.match_list))  # Console Messaging
 
     def sfm_model_creation(self):
