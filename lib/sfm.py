@@ -258,6 +258,8 @@ class SFM:
             # print(model_pair_m_points)
 
             # -------------------------------------------- #
+            # Uncomment the following lines for debugging. #
+            # -------------------------------------------- #
             # export_path = os.path.expanduser("~/Desktop")
             # export_path += "/sfm_tmp/scaled"
             # export_path_norm = os.path.normpath(export_path)
@@ -341,6 +343,8 @@ class SFM:
             print(model_centroid_err)
 
             # -------------------------------------------- #
+            # Uncomment the following lines for debugging. #
+            # -------------------------------------------- #
             export_path = os.path.expanduser("~/Desktop")
             export_path += "/sfm_tmp/final"
             export_path_norm = os.path.normpath(export_path)
@@ -357,6 +361,8 @@ class SFM:
         for i in range(0, model_size):
             self.model_id.append(i)
 
+        # -------------------------------------------- #
+        # Uncomment the following lines for debugging. #
         # -------------------------------------------- #
         # print(self.model_coord_list[0])
         # print(self.model_color_list[0])
