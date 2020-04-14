@@ -219,6 +219,7 @@ class Image:
         self.feature_colors = color_list
         self.feature_ids = feat_ids
 
+
 def downsample_image(image, set_quality):
 
     img_size = image.shape

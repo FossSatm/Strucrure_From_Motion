@@ -73,6 +73,7 @@ class SFM:
     def sfm_find_feature_points(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT, set_quality=Q_HIGH):
         """
         The routine for finding the feature points.
+        :param set_quality:
         :param flag: Feature points flag
         :param set_camera_method: Camera setting method
         :return: Nothing
