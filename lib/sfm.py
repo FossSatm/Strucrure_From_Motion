@@ -208,6 +208,7 @@ class SFM:
             message_print("Scale = %f" % scale)
             message_print("Scale Error = %f" % scale_error)
 
+            """
             X_o_prev = 0.0
             Y_o_prev = 0.0
             Z_o_prev = 0.0
@@ -215,26 +216,27 @@ class SFM:
             X_o_new = 0.0
             Y_o_new = 0.0
             Z_o_new = 0.0
+            """
 
             # Scale Current model
             model_curr_scaled_points = []
             for j in range(0, model_curr_size):
-
+                """
                 X_o_prev += model_curr_points[j][0]
                 Y_o_prev += model_curr_points[j][1]
                 Z_o_prev += model_curr_points[j][2]
+                """
 
                 x = model_curr_points[j][0] * scale
                 y = model_curr_points[j][1] * scale
                 z = model_curr_points[j][2] * scale
-
-                X_o_new += x
-                Y_o_new += y
-                Z_o_new += z
-
                 tmp = [x, y, z]
                 model_curr_scaled_points.append(tmp)
 
+                """
+                X_o_new += x
+                Y_o_new += y
+                Z_o_new += z
             X_o_prev /= model_curr_size
             Y_o_prev /= model_curr_size
             Z_o_prev /= model_curr_size
@@ -250,7 +252,7 @@ class SFM:
                 model_curr_scaled_points[j][0] += dx
                 model_curr_scaled_points[j][1] += dy
                 model_curr_scaled_points[j][2] += dz
-
+            """
             # print(len(model_pair_m_points))
             # print(model_pair_m_points)
             for j in range(0, model_matching_size):
@@ -289,7 +291,11 @@ class SFM:
 
             # -------------------------------------------- #
             export_path = os.path.expanduser("~/Desktop")
-            export_path += "/sfm_tmp/final"
+            export_path += "/sfm_tmp/"
+            export_path_norm = os.path.normpath(export_path)
+            if not os.path.exists(export_path_norm):
+                os.mkdir(export_path_norm)
+            export_path += "/final"
             export_path_norm = os.path.normpath(export_path)
             if not os.path.exists(export_path_norm):
                 os.mkdir(export_path_norm)
@@ -346,7 +352,11 @@ class SFM:
             # Uncomment the following lines for debugging. #
             # -------------------------------------------- #
             export_path = os.path.expanduser("~/Desktop")
-            export_path += "/sfm_tmp/final"
+            export_path += "/sfm_tmp/"
+            export_path_norm = os.path.normpath(export_path)
+            if not os.path.exists(export_path_norm):
+                os.mkdir(export_path_norm)
+            export_path += "/final"
             export_path_norm = os.path.normpath(export_path)
             if not os.path.exists(export_path_norm):
                 os.mkdir(export_path_norm)
@@ -364,11 +374,12 @@ class SFM:
         # -------------------------------------------- #
         # Uncomment the following lines for debugging. #
         # -------------------------------------------- #
-        # print(self.model_coord_list[0])
-        # print(self.model_color_list[0])
-        # print(self.model_coord_id_list[0])
         export_path = os.path.expanduser("~/Desktop")
-        export_path += "/sfm_tmp/model"
+        export_path += "/sfm_tmp/"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/model"
         export_path_norm = os.path.normpath(export_path)
         if not os.path.exists(export_path_norm):
             os.mkdir(export_path_norm)
