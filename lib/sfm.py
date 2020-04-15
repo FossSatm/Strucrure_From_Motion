@@ -245,7 +245,6 @@ class SFM:
 
         model_points = []
         model_colors = []
-
         model_ids = []  # the list with all ids that refers to the same point
 
         model_ids_tmp = self.match_list[0].MODEL_ID_LIST()  # Set the point list of the current model to a tmp list
@@ -260,12 +259,7 @@ class SFM:
         for i in range(0, model_curr_size):
             model_points.append(model_curr_points[i])
             model_colors.append(model_curr_colors[i])
-            """
-            new_entry = self.sfm_new_entry()
-            model_ids.append(new_entry)
-            model_ids[i][model_curr_image_L.IMG_ID()] = model_ids_tmp[i][0]
-            model_ids[i][model_curr_image_R.IMG_ID()] = model_ids_tmp[i][1]
-            """
+
             model_ids[model_curr_image_L.IMG_ID()][str(model_ids_tmp[i][0])] = i
             model_ids[model_curr_image_R.IMG_ID()][str(model_ids_tmp[i][1])] = i
 
@@ -290,7 +284,6 @@ class SFM:
             model_pair_m_ids = []
             model_pair_m_points = []
             model_fin_pair_m_ids = []
-
             for j in range(0, model_curr_size):
                 if model_ids[model_curr_image_L.IMG_ID()].get(str(model_ids_tmp[j][0]), -1) != -1:
                     m = model_ids[model_curr_image_L.IMG_ID()].get(str(model_ids_tmp[j][0]), -1)
@@ -381,6 +374,7 @@ class SFM:
                 # print(model_pair_m_points)
                 for j in range(0, model_matching_size):
                     model_pair_m_points[j] = model_curr_scaled_points[model_pair_m_ids[j]]
+
                 # print(model_pair_m_points)
 
                 # -------------------------------------------- #

@@ -10,6 +10,13 @@ from math import sqrt
 
 
 def rigid_transform_3D(A, B):
+    """
+    Find the rotation and translation matrices for: A ---> B
+    :param A: XYZ reference system A
+    :param B: XYZ reference system B
+    :return: R, t
+    """
+
     assert len(A) == len(B)
 
     A = np.array(A)
