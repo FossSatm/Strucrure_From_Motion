@@ -56,7 +56,7 @@ class SFM:
             self.sfm_image_matching_slow(match_method=match_method)  # Match Images
         else:
             self.sfm_image_matching_medium(match_method=match_method)  # Match Images
-        self.sfm_model_creation_fast()
+        self.sfm_model_creation_dictionary()
 
     def sfm_set_image_list(self, f_src):
         """
@@ -235,6 +235,291 @@ class SFM:
         print("")
         message_print("Found %d matches." % len(self.match_list))  # Console Messaging
 
+    def sfm_model_creation_dictionary(self):
+        print("")
+        message_print("Create Final Model")
+        message_print("Find First Model")
+
+        model_curr_points = self.match_list[0].MODEL_POINTS_LIST()  # The list of model points
+        model_curr_colors = self.match_list[0].MODEL_COLOR_LIST()  # The list of corresponding colors
+
+        model_points = []
+        model_colors = []
+
+        model_ids = []  # the list with all ids that refers to the same point
+
+        model_ids_tmp = self.match_list[0].MODEL_ID_LIST()  # Set the point list of the current model to a tmp list
+        model_curr_image_L: Image = self.match_list[0].IMG_LEFT()  # Set the current left image
+        model_curr_image_R: Image = self.match_list[0].IMG_RIGHT()  # Set the current right image
+        model_curr_size = len(self.match_list[0].MODEL_POINTS_LIST())  # Find the size of the current model
+        image_list_size = len(self.image_list)
+        for i in range(0, image_list_size):
+            tmp = {}
+            model_ids.append(tmp)
+
+        for i in range(0, model_curr_size):
+            model_points.append(model_curr_points[i])
+            model_colors.append(model_curr_colors[i])
+            """
+            new_entry = self.sfm_new_entry()
+            model_ids.append(new_entry)
+            model_ids[i][model_curr_image_L.IMG_ID()] = model_ids_tmp[i][0]
+            model_ids[i][model_curr_image_R.IMG_ID()] = model_ids_tmp[i][1]
+            """
+            model_ids[model_curr_image_L.IMG_ID()][str(model_ids_tmp[i][0])] = i
+            model_ids[model_curr_image_R.IMG_ID()][str(model_ids_tmp[i][1])] = i
+
+        # print(model_ids)
+        match_list_size = len(self.match_list)
+        show_size = match_list_size - 1
+        for i in range(1, match_list_size):
+            model_ids_tmp = self.match_list[i].MODEL_ID_LIST()  # Set the point list of the current model to a tmp list
+            model_curr_image_L = self.match_list[i].IMG_LEFT()  # Set the current left image
+            model_curr_image_R = self.match_list[i].IMG_RIGHT()  # Set the current right image
+            model_curr_size = len(self.match_list[i].MODEL_POINTS_LIST())  # Find the size of the current model
+            model_curr_points = self.match_list[i].MODEL_POINTS_LIST()
+            model_curr_colors = self.match_list[i].MODEL_COLOR_LIST()
+
+            print("")
+            print("(%d / " % i + "%d)" % show_size)
+            message_print("Add Model %s - " % model_curr_image_L.IMG_NAME() +
+                          "%s to Model" % model_curr_image_R.IMG_NAME())
+
+            model_fin_m_ids = []
+            model_fin_m_points = []
+            model_pair_m_ids = []
+            model_pair_m_points = []
+            model_fin_pair_m_ids = []
+
+            for j in range(0, model_curr_size):
+                if model_ids[model_curr_image_L.IMG_ID()].get(str(model_ids_tmp[j][0]), -1) != -1:
+                    m = model_ids[model_curr_image_L.IMG_ID()].get(str(model_ids_tmp[j][0]), -1)
+                    model_fin_m_ids.append(m)
+                    model_pair_m_ids.append(j)
+                    p_tmp_fin = model_points[m]
+                    p_tmp_curr = model_curr_points[j]
+                    model_fin_m_points.append(p_tmp_fin)
+                    model_pair_m_points.append(p_tmp_curr)
+                    tmp = [m, j]
+                    model_fin_pair_m_ids.append(tmp)
+                elif model_ids[model_curr_image_R.IMG_ID()].get(str(model_ids_tmp[j][1]), -1) != -1:
+                    m = model_ids[model_curr_image_R.IMG_ID()].get(str(model_ids_tmp[j][1]), -1)
+                    model_fin_m_ids.append(m)
+                    model_pair_m_ids.append(j)
+                    p_tmp_fin = model_points[m]
+                    p_tmp_curr = model_curr_points[j]
+                    model_fin_m_points.append(p_tmp_fin)
+                    model_pair_m_points.append(p_tmp_curr)
+                    tmp = [m, j]
+                    model_fin_pair_m_ids.append(tmp)
+                else:
+                    tmp = [-1, -1]
+                    model_fin_pair_m_ids.append(tmp)
+
+            model_matching_size = len(model_fin_m_ids)
+            if model_matching_size < 5:
+                print("Model cannot be added due to few corresponding points.")
+            else:
+                # print(model_fin_m_ids)
+                # print(model_pair_m_ids)
+                # print(len(model_fin_m_ids))
+                # print(len(model_pair_m_ids))
+
+                # Find Scale
+                scale, scale_error = find_scale_parameter(model_fin_m_points, model_pair_m_points)
+
+                message_print("Scale Pair Model:")
+                message_print("Scale = %f" % scale)
+                message_print("Scale Error = %f" % scale_error)
+
+                """
+                X_o_prev = 0.0
+                Y_o_prev = 0.0
+                Z_o_prev = 0.0
+
+                X_o_new = 0.0
+                Y_o_new = 0.0
+                Z_o_new = 0.0
+                """
+
+                # Scale Current model
+                model_curr_scaled_points = []
+                for j in range(0, model_curr_size):
+                    """
+                    X_o_prev += model_curr_points[j][0]
+                    Y_o_prev += model_curr_points[j][1]
+                    Z_o_prev += model_curr_points[j][2]
+                    """
+
+                    x = model_curr_points[j][0] * scale
+                    y = model_curr_points[j][1] * scale
+                    z = model_curr_points[j][2] * scale
+                    tmp = [x, y, z]
+                    model_curr_scaled_points.append(tmp)
+
+                    """
+                    X_o_new += x
+                    Y_o_new += y
+                    Z_o_new += z
+                X_o_prev /= model_curr_size
+                Y_o_prev /= model_curr_size
+                Z_o_prev /= model_curr_size
+                X_o_new /= model_curr_size
+                Y_o_new /= model_curr_size
+                Z_o_new /= model_curr_size
+
+                dx = X_o_prev - X_o_new
+                dy = Y_o_prev - Y_o_new
+                dz = Z_o_prev - Z_o_new
+
+                for j in range(0, model_curr_size):
+                    model_curr_scaled_points[j][0] += dx
+                    model_curr_scaled_points[j][1] += dy
+                    model_curr_scaled_points[j][2] += dz
+                """
+                # print(len(model_pair_m_points))
+                # print(model_pair_m_points)
+                for j in range(0, model_matching_size):
+                    model_pair_m_points[j] = model_curr_scaled_points[model_pair_m_ids[j]]
+                # print(model_pair_m_points)
+
+                # -------------------------------------------- #
+                # Uncomment the following lines for debugging. #
+                # -------------------------------------------- #
+                # export_path = os.path.expanduser("~/Desktop")
+                # export_path += "/sfm_tmp/scaled"
+                # export_path_norm = os.path.normpath(export_path)
+                # if not os.path.exists(export_path_norm):
+                #    os.mkdir(export_path_norm)
+                # export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
+                #               + model_curr_image_R.IMG_NAME() + "_scaled.ply"
+                # export_path_norm = os.path.normpath(export_path)
+                # export_as_ply(model_curr_scaled_points, model_curr_colors, export_path_norm)
+                # -------------------------------------------- #
+
+                R, t = rigid_transform_3D(np.transpose(model_pair_m_points), np.transpose(model_fin_m_points))
+
+                message_print("Calculate Rotation & Translation Matrices:")
+                message_print("Rotation = ")
+                print(R)
+                message_print("Translation = ")
+                print(t)
+
+                # print(model_curr_scaled_points)
+                A = np.transpose(model_curr_scaled_points)
+                m, n = A.shape
+                B2 = np.dot(R, A) + np.tile(t, (1, n))
+                model_curr_scaled_R_t_points = np.transpose(B2)
+                # print(model_curr_scaled_R_t_points)
+                model_curr_scaled_points.clear()
+
+                # -------------------------------------------- #
+                export_path = os.path.expanduser("~/Desktop")
+                export_path += "/sfm_tmp/"
+                export_path_norm = os.path.normpath(export_path)
+                if not os.path.exists(export_path_norm):
+                    os.mkdir(export_path_norm)
+                export_path += "/final"
+                export_path_norm = os.path.normpath(export_path)
+                if not os.path.exists(export_path_norm):
+                    os.mkdir(export_path_norm)
+                export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
+                               + model_curr_image_R.IMG_NAME() + "_final.ply"
+                export_path_norm = os.path.normpath(export_path)
+                export_as_ply(model_curr_scaled_R_t_points, model_curr_colors, export_path_norm)
+                # -------------------------------------------- #
+                model_fin_m_ids.clear()
+                model_fin_m_points.clear()
+                model_pair_m_ids.clear()
+                model_pair_m_points.clear()
+
+                for j in range(0, model_curr_size):
+                    if model_fin_pair_m_ids[j][0] == -1:
+                        model_points.append(model_curr_scaled_R_t_points[j])
+                        model_colors.append(model_curr_colors[j])
+                        """
+                        new_entry = self.sfm_new_entry()
+                        model_ids.append(new_entry)
+                        index = len(model_ids) - 1
+                        model_ids[index][model_curr_image_L.IMG_ID()] = model_ids_tmp[j][0]
+                        model_ids[index][model_curr_image_R.IMG_ID()] = model_ids_tmp[j][1]
+                        """
+                        index = len(model_points) - 1
+                        model_ids[model_curr_image_L.IMG_ID()][str(model_ids_tmp[j][0])] = index
+                        model_ids[model_curr_image_R.IMG_ID()][str(model_ids_tmp[j][1])] = index
+
+                    else:
+                        k_ind = model_fin_pair_m_ids[j][0]
+                        l_ind = model_fin_pair_m_ids[j][1]
+                        model_points[k_ind][0] += model_curr_scaled_R_t_points[l_ind][0]
+                        model_points[k_ind][1] += model_curr_scaled_R_t_points[l_ind][1]
+                        model_points[k_ind][2] += model_curr_scaled_R_t_points[l_ind][2]
+
+                        model_colors[k_ind][0] += model_curr_colors[l_ind][0]
+                        model_colors[k_ind][1] += model_curr_colors[l_ind][1]
+                        model_colors[k_ind][2] += model_curr_colors[l_ind][2]
+
+                        model_points[k_ind][0] /= 2
+                        model_points[k_ind][1] /= 2
+                        model_points[k_ind][2] /= 2
+
+                        model_colors[k_ind][0] /= 2
+                        model_colors[k_ind][1] /= 2
+                        model_colors[k_ind][2] /= 2
+
+                # print(model_ids)
+
+                model_size = len(model_points)
+                model_points_T = np.transpose(model_points)
+                model_centroid = [np.mean(model_points_T[0]), np.mean(model_points_T[1]), np.mean(model_points_T[2])]
+                model_centroid_err = [np.std(model_points_T[0]), np.std(model_points_T[1]), np.std(model_points_T[2])]
+
+                message_print("New model size = %d" % model_size)
+                message_print("New model centroid = ")
+                print(model_centroid)
+                message_print("New model centroid errors = ")
+                print(model_centroid_err)
+
+                # -------------------------------------------- #
+                # Uncomment the following lines for debugging. #
+                # -------------------------------------------- #
+                export_path = os.path.expanduser("~/Desktop")
+                export_path += "/sfm_tmp/"
+                export_path_norm = os.path.normpath(export_path)
+                if not os.path.exists(export_path_norm):
+                    os.mkdir(export_path_norm)
+                export_path += "/final"
+                export_path_norm = os.path.normpath(export_path)
+                if not os.path.exists(export_path_norm):
+                    os.mkdir(export_path_norm)
+                export_path += "/model_" + str(i) + "_final.ply"
+                export_path_norm = os.path.normpath(export_path)
+                export_as_ply(model_points, model_colors, export_path_norm)
+                # -------------------------------------------- #
+
+        self.model_points = model_points
+        self.model_colors = model_colors
+        model_size = len(self.model_points)
+        for i in range(0, model_size):
+            self.model_id.append(i)
+
+        # -------------------------------------------- #
+        # Uncomment the following lines for debugging. #
+        # -------------------------------------------- #
+        export_path = os.path.expanduser("~/Desktop")
+        export_path += "/sfm_tmp/"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/model"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/model_final.ply"
+        export_path_norm = os.path.normpath(export_path)
+        export_as_ply(self.model_points, self.model_colors, export_path_norm)
+        # -------------------------------------------- #
+
     def sfm_model_creation_fast(self):
         print("")
         message_print("Create Final Model")
@@ -292,38 +577,6 @@ class SFM:
             model_pair_m_ids = []
             model_pair_m_points = []
             model_fin_pair_m_ids = []
-            """
-            for j in range(0, model_curr_size):  
-                is_not_match = False
-                for k in range(0, model_fin_size):
-                    if model_ids[k][model_curr_image_L.IMG_ID()] == model_ids_tmp[j][0]:
-                        model_fin_m_ids.append(k)
-                        model_pair_m_ids.append(j)
-                        p_tmp_fin = model_points[k]
-                        p_tmp_curr = model_curr_points[j]
-                        model_fin_m_points.append(p_tmp_fin)
-                        model_pair_m_points.append(p_tmp_curr)
-                        tmp = [k, j]
-                        model_fin_pair_m_ids.append(tmp)
-                        is_not_match = False
-                        break
-                    elif model_ids[k][model_curr_image_R.IMG_ID()] == model_ids_tmp[j][1]:
-                        model_fin_m_ids.append(k)
-                        model_pair_m_ids.append(j)
-                        p_tmp_fin = model_points[k]
-                        p_tmp_curr = model_curr_points[j]
-                        model_fin_m_points.append(p_tmp_fin)
-                        model_pair_m_points.append(p_tmp_curr)
-                        tmp = [k, j]
-                        model_fin_pair_m_ids.append(tmp)
-                        is_not_match = False
-                        break
-                    else:
-                        is_not_match = True
-                if is_not_match:
-                    tmp = [-1, -1]
-                    model_fin_pair_m_ids.append(tmp)
-                """
 
             curr_left_ids = len(model_ids[model_curr_image_L.IMG_ID()])
             curr_right_ids = len(model_ids[model_curr_image_R.IMG_ID()])
