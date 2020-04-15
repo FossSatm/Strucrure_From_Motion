@@ -512,7 +512,7 @@ class SFM:
                         model_colors[k_ind][1] /= 2
                         model_colors[k_ind][2] /= 2
 
-                print(model_ids)
+                # print(model_ids)
 
                 model_size = len(model_points)
                 model_points_T = np.transpose(model_points)
