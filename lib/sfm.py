@@ -408,19 +408,19 @@ class SFM:
                 model_curr_scaled_points.clear()
 
                 # -------------------------------------------- #
-                export_path = os.path.expanduser("~/Desktop")
-                export_path += "/sfm_tmp/"
-                export_path_norm = os.path.normpath(export_path)
-                if not os.path.exists(export_path_norm):
-                    os.mkdir(export_path_norm)
-                export_path += "/final"
-                export_path_norm = os.path.normpath(export_path)
-                if not os.path.exists(export_path_norm):
-                    os.mkdir(export_path_norm)
-                export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
-                               + model_curr_image_R.IMG_NAME() + "_final.ply"
-                export_path_norm = os.path.normpath(export_path)
-                export_as_ply(model_curr_scaled_R_t_points, model_curr_colors, export_path_norm)
+                #export_path = os.path.expanduser("~/Desktop")
+                #export_path += "/sfm_tmp/"
+                #export_path_norm = os.path.normpath(export_path)
+                #if not os.path.exists(export_path_norm):
+                #    os.mkdir(export_path_norm)
+                #export_path += "/final"
+                #export_path_norm = os.path.normpath(export_path)
+                #if not os.path.exists(export_path_norm):
+                #    os.mkdir(export_path_norm)
+                #export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
+                #               + model_curr_image_R.IMG_NAME() + "_final.ply"
+                #export_path_norm = os.path.normpath(export_path)
+                #export_as_ply(model_curr_scaled_R_t_points, model_curr_colors, export_path_norm)
                 # -------------------------------------------- #
                 model_fin_m_ids.clear()
                 model_fin_m_points.clear()
@@ -431,17 +431,9 @@ class SFM:
                     if model_fin_pair_m_ids[j][0] == -1:
                         model_points.append(model_curr_scaled_R_t_points[j])
                         model_colors.append(model_curr_colors[j])
-                        """
-                        new_entry = self.sfm_new_entry()
-                        model_ids.append(new_entry)
-                        index = len(model_ids) - 1
-                        model_ids[index][model_curr_image_L.IMG_ID()] = model_ids_tmp[j][0]
-                        model_ids[index][model_curr_image_R.IMG_ID()] = model_ids_tmp[j][1]
-                        """
                         index = len(model_points) - 1
                         model_ids[model_curr_image_L.IMG_ID()][str(model_ids_tmp[j][0])] = index
                         model_ids[model_curr_image_R.IMG_ID()][str(model_ids_tmp[j][1])] = index
-
                     else:
                         k_ind = model_fin_pair_m_ids[j][0]
                         l_ind = model_fin_pair_m_ids[j][1]
