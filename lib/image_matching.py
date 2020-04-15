@@ -222,6 +222,7 @@ class ImageMatching:
             X_o += p_x
             Y_o += p_y
             Z_o += p_z
+
             self.model_coord_list.append(p_tmp)
             self.model_color_list.append(color_tmp)
             self.model_coord_id_list.append(id_tmp)

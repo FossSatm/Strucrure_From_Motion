@@ -26,22 +26,22 @@ class SFM:
         self.image_list: [] = []  # Create the list of images
         self.match_list: [] = []  # Create the list for image matching
 
-        self.model_id: [] = []
-        self.model_points: [] = []
-        self.model_colors: [] = []
+        self.model_id: [] = []  # The id list for each model point [id]
+        self.model_points: [] = []  # The list of model points [X, Y, Z]
+        self.model_colors: [] = []  # The list of the colors for each point [R, G, B]
 
-    def sfm_run(self, f_src: str, fp_method=FM_AKAZE, set_camera_method=CAM_DEFAULT,
+    def sfm_run(self, f_src: str, fp_method=FM_AKAZE, set_camera_method=CAM_APPROXIMATE,
                 match_method=MATCH_FLANN, speed_match=MEDIUM_SPEED_MATCH, set_quality=Q_HIGH,
                 camera_approximate_method=APPROXIMATE_WIDTH_HEIGHT):
         """
         Main SFM routine.
-        :param camera_approximate_method:
-        :param speed_match:
-        :param set_quality:
         :param f_src: The folder source which contains the images
         :param fp_method: The feature point extraction method
         :param set_camera_method: The method for calculate camera parameters
         :param match_method: The method which will be performed the matching
+        :param speed_match: The matching way
+        :param set_quality: The maximum pixel size the image needs to have for the algorithm to run
+        :param camera_approximate_method: The way the focal length will be approximated
         :return: Nothing
         """
         self.sfm_set_image_list(f_src)  # Open Images
@@ -68,7 +68,7 @@ class SFM:
         for suffix in self.ALL_SUPPORTED_FORMATS_LIST:  # For all supported suffixes
             imgs_src = os.path.normpath(f_src) + os.path.normpath("/" + suffix)  # Set the searching path
             img_files_path = glob.glob(imgs_src)  # Take all image paths with selected suffix
-            img_files_path.sort()
+            img_files_path.sort()  # Sort the list
             for path in img_files_path:  # For all paths in img_file_path
                 img_tmp = Image()  # Create temporary Image() instance
                 img_tmp.img_open_image(path, img_id=img_id_counter)  # Open the image (write the path information)
@@ -86,14 +86,14 @@ class SFM:
         # print(self.image_list[0].INFO())
         # -------------------------------------------- #
 
-    def sfm_find_feature_points(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT, set_quality=Q_HIGH,
+    def sfm_find_feature_points(self, flag=FM_AKAZE, set_camera_method=CAM_APPROXIMATE, set_quality=Q_HIGH,
                                 camera_approximate_method=APPROXIMATE_WIDTH_HEIGHT):
         """
         The routine for finding the feature points.
-        :param camera_approximate_method:
-        :param set_quality:
         :param flag: Feature points flag
         :param set_camera_method: Camera setting method
+        :param set_quality: The maximum pixel size the image needs to have for the algorithm to run
+        :param camera_approximate_method: The way the focal length will be approximated
         :return: Nothing
         """
         for img in self.image_list:  # For all images in image list

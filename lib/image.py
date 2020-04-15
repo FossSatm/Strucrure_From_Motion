@@ -157,28 +157,28 @@ class Image:
         self.img_name = basename[0]  # Set the image name
         self.img_suffix = basename[1]  # Set the suffix
 
-    def img_set_camera(self, flag=CAM_DEFAULT, camera_approximate_method=APPROXIMATE_WIDTH_HEIGHT):
+    def img_set_camera(self, flag=CAM_APPROXIMATE, camera_approximate_method=APPROXIMATE_WIDTH_HEIGHT):
         """
         Set Camera routine.
-        :param camera_approximate_method:
         :param flag: The method for which will be used for camera setting
+        :param camera_approximate_method:
         :return: Nothing
         """
         if flag == CAM_APPROXIMATE:  # if Camera Approximate
             # Approximate the camera parameters
             self.camera.camera_approximate_parameters(self.width, self.height, camera_approximate_method)
-        elif flag == CAM_FROM_FILE:  # elsif Camera From File (take the parameters from file)
+        elif flag == CAM_FROM_FILE:  # elif Camera From File (take the parameters from file)
             pass
         else:  # else Set the default parameters
             self.camera.set_camera_parameters()
 
-    def img_find_features(self, flag=FM_AKAZE, set_camera_method=CAM_DEFAULT, set_quality=Q_HIGH,
+    def img_find_features(self, flag=FM_AKAZE, set_camera_method=CAM_APPROXIMATE, set_quality=Q_HIGH,
                           camera_approximate_method=APPROXIMATE_WIDTH_HEIGHT):
         """
-        :param camera_approximate_method:
-        :param set_quality:
-        :param set_camera_method:
         :param flag:
+        :param set_camera_method:
+        :param set_quality:
+        :param camera_approximate_method:
         :return:
         """
         # Choose the Feature Points Extraction method
@@ -191,7 +191,7 @@ class Image:
         else:  # else (if AKAZE) create akaze method
             method = cv.AKAZE_create()
 
-        img = cv.imread(self.src)  # open image as grayscale
+        img = cv.imread(self.src)  # open image
         img = downsample_image(img, set_quality)  # downsample image to the given quality
         img_size = img.shape  # take the shape of image (height x width x channels)
         self.width = img_size[1]  # set width
@@ -226,8 +226,12 @@ class Image:
 
 
 def downsample_image(image, set_quality):
-
-    img_size = image.shape
+    """
+    :param image: The image table
+    :param set_quality: The maximum pixel size the image needs to have. Else downsample image.
+    :return: image_down
+    """
+    img_size = image.shape  # Take the shape of image
     width = img_size[1]
     height = img_size[0]
 
