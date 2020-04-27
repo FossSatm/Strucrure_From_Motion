@@ -1064,9 +1064,9 @@ class SFM:
                 # -------------------------------------------- #
 
         model_size = len(self.model_points)
-
         message_print("Remove Noise Points.")
-        model_clustering = sklearn.cluster.DBSCAN(eps=3, min_samples=2).fit(model_points)
+        min_samples = model_size / 2000
+        model_clustering = sklearn.cluster.DBSCAN(eps=3, min_samples=min_samples).fit(model_points)
         counter_id = 0
         for i in range(0, model_size):
             if model_clustering[i] != -1:
