@@ -2,6 +2,7 @@
 import os
 import glob
 import math as mth
+import sklearn
 
 # Written Libraries #
 from lib.image import *
@@ -1062,11 +1063,25 @@ class SFM:
                 export_as_ply(model_points, model_colors, export_path_norm)
                 # -------------------------------------------- #
 
-        self.model_points = model_points
-        self.model_colors = model_colors
         model_size = len(self.model_points)
+
+        message_print("Remove Noise Points.")
+        model_clustering = sklearn.cluster.DBSCAN(eps=3, min_samples=2).fit(model_points)
+        counter_id = 0
         for i in range(0, model_size):
-            self.model_id.append(i)
+            if model_clustering[i] != -1:
+                self.model_points.append(model_points[i])
+                self.model_colors.append(model_colors[i])
+                self.model_id.append(counter_id)
+                counter_id += 1
+
+        # self.model_points = model_points
+        # self.model_colors = model_colors
+        # for i in range(0, model_size):
+            # self.model_id.append(i)
+
+        message_print("Final Cloud = %d out of " % len(self.model_points) +
+                      "%d previous model points." % model_size)
 
         # -------------------------------------------- #
         # Uncomment the following lines for debugging. #
