@@ -1089,11 +1089,14 @@ class SFM:
 
     def sfm_remove_noise_from_model(self):
         model_size = len(self.model_points)
-        message_print("Remove Noise Points.")
+        message_print("\nRemove Noise Points.")
         min_samples = model_size / 2000
+        if min_samples < 50:
+            min_samples = 50
+        elif min_samples > 100:
+            min_samples = 100
         model_clustering, label = dbscan(self.model_points, min_samples=min_samples)
         counter_id = 0
-
         model_points = []
         model_colors = []
         model_id = []
