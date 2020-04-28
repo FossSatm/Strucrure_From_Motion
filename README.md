@@ -2,6 +2,7 @@
 A structure from motion algorithm. Written in python.
 
 ## Dependences:
+- **python3 64-bit:** Need this architecture to run in large images without memory error.
 - **numpy:** pip install numpy
 - **opencv:** pip install opencv-python
 - **scikit-learn:** pip install scikit-learn
