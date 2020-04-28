@@ -2,7 +2,7 @@
 import os
 import glob
 import math as mth
-import sklearn
+from sklearn.cluster import dbscan
 
 # Written Libraries #
 from lib.image import *
@@ -58,6 +58,7 @@ class SFM:
         else:
             self.sfm_image_matching_medium(match_method=match_method)  # Match Images
         self.sfm_model_creation_dictionary()
+        self.sfm_remove_noise_from_model()
 
     def sfm_set_image_list(self, f_src):
         """
@@ -1063,25 +1064,11 @@ class SFM:
                 export_as_ply(model_points, model_colors, export_path_norm)
                 # -------------------------------------------- #
 
+        self.model_points = model_points
+        self.model_colors = model_colors
         model_size = len(self.model_points)
-        message_print("Remove Noise Points.")
-        min_samples = model_size / 2000
-        model_clustering = sklearn.cluster.DBSCAN(eps=3, min_samples=min_samples).fit(model_points)
-        counter_id = 0
         for i in range(0, model_size):
-            if model_clustering[i] != -1:
-                self.model_points.append(model_points[i])
-                self.model_colors.append(model_colors[i])
-                self.model_id.append(counter_id)
-                counter_id += 1
-
-        # self.model_points = model_points
-        # self.model_colors = model_colors
-        # for i in range(0, model_size):
-            # self.model_id.append(i)
-
-        message_print("Final Cloud = %d out of " % len(self.model_points) +
-                      "%d previous model points." % model_size)
+            self.model_id.append(i)
 
         # -------------------------------------------- #
         # Uncomment the following lines for debugging. #
@@ -1096,6 +1083,47 @@ class SFM:
         if not os.path.exists(export_path_norm):
             os.mkdir(export_path_norm)
         export_path += "/model_final.ply"
+        export_path_norm = os.path.normpath(export_path)
+        export_as_ply(self.model_points, self.model_colors, export_path_norm)
+        # -------------------------------------------- #
+
+    def sfm_remove_noise_from_model(self):
+        model_size = len(self.model_points)
+        message_print("Remove Noise Points.")
+        min_samples = model_size / 2000
+        model_clustering, label = dbscan(self.model_points, min_samples=min_samples)
+        counter_id = 0
+
+        model_points = []
+        model_colors = []
+        model_id = []
+        for i in range(0, model_size):
+            if label[i] != -1:
+                model_points.append(self.model_points[i])
+                model_colors.append(self.model_colors[i])
+                model_id.append(counter_id)
+                counter_id += 1
+
+        message_print("Final Cloud = %d out of " % len(model_points) +
+                      "%d previous model points." % model_size)
+
+        self.model_points = model_points
+        self.model_colors = model_colors
+        self.model_id = model_id
+
+        # -------------------------------------------- #
+        # Uncomment the following lines for debugging. #
+        # -------------------------------------------- #
+        export_path = os.path.expanduser("~/Desktop")
+        export_path += "/sfm_tmp/"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/model"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/model_no_noise_final.ply"
         export_path_norm = os.path.normpath(export_path)
         export_as_ply(self.model_points, self.model_colors, export_path_norm)
         # -------------------------------------------- #
