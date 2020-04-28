@@ -209,7 +209,7 @@ class ImageMatching:
         for i in range(0, retval):
             p_x = points4D[0][i] / points4D[3][i]
             p_y = points4D[1][i] / points4D[3][i]
-            p_z = points4D[2][i] / points4D[3][i]
+            p_z = -points4D[2][i] / points4D[3][i]
             p_tmp = [p_x, p_y, p_z]
 
             c_r = (img_L_colors[i][0] + img_R_colors[i][0]) / 2
@@ -232,9 +232,9 @@ class ImageMatching:
         Z_o /= retval
 
         # Move pair model to new principal point
-        dx = 1000.0 - X_o
-        dy = 1000.0 - Y_o
-        dz = 1000.0 - Z_o
+        dx = 100000.0 - X_o
+        dy = 100000.0 - Y_o
+        dz = 100000.0 - Z_o
 
         for i in range(0, retval):
             self.model_coord_list[i][0] += dx

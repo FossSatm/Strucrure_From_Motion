@@ -989,6 +989,8 @@ class SFM:
                 model_curr_scaled_points.clear()
 
                 # -------------------------------------------- #
+                # Uncomment the following lines for debugging. #
+                # -------------------------------------------- #
                 export_path = os.path.expanduser("~/Desktop")
                 export_path += "/sfm_tmp/"
                 export_path_norm = os.path.normpath(export_path)
@@ -1091,10 +1093,10 @@ class SFM:
         model_size = len(self.model_points)
         message_print("\nRemove Noise Points.")
         min_samples = model_size / 2000
-        if min_samples < 50:
-            min_samples = 50
-        elif min_samples > 100:
-            min_samples = 100
+        if min_samples < 25:
+            min_samples = 25
+        elif min_samples > 500:
+            min_samples = 500
         model_clustering, label = dbscan(self.model_points, min_samples=min_samples)
         counter_id = 0
         model_points = []
