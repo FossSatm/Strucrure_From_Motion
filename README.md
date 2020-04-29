@@ -6,6 +6,9 @@ A structure from motion algorithm. Written in python.
 - **numpy:** pip install numpy
 - **opencv:** pip install opencv-python
 - **scikit-learn:** pip install scikit-learn
+- **open3d:** pip install open3d-python open3d==0.9.0.0
+
+**One line command:** pip install numpy opencv-python scikit-learn open3d-python open3d==0.9.0.0
 
 ## Simple Description:
 
