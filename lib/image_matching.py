@@ -7,6 +7,9 @@ MATCH_BRUTEFORCE_HAMMING = 1
 
 LOWE_RATIO = 0.9
 
+CENTER_X = 0.0
+CENTER_Y = 0.0
+CENTER_Z = 0.0
 
 class ImageMatching:
     """
@@ -20,6 +23,10 @@ class ImageMatching:
         self.model_coord_list: [] = []  # [X, Y, Z]
         self.model_color_list: [] = []  # [R, G, B]
         self.model_coord_id_list: [] = []  # [id_L, id_R]
+
+        self.model_center_X = CENTER_X
+        self.model_center_Y = CENTER_Y
+        self.model_center_Z = CENTER_Z
 
     # ---------------- #
     # RETURN FUNCTIONS #
@@ -80,7 +87,7 @@ class ImageMatching:
         matches = method_flann.knnMatch(descr_L, descr_R, k=2)
         return self.m_img_match(matches=matches)
 
-    def m_img_match(self, matches, model_center_X=10000.0, model_center_Y=10000.0, model_center_Z=10000.0):
+    def m_img_match(self, matches):
         kp_L = self.imgL.KEYPOINT_LIST()
         kp_R = self.imgR.KEYPOINT_LIST()
         kp_ids_L = self.imgL.KEYPOINT_IDS_LIST()
@@ -144,11 +151,9 @@ class ImageMatching:
         if g_inlier_size < 0.3 * g_points_size:
             message_print("Not a good match!")
             return False
-        return self.m_img_create_model(model_center_X=model_center_X,
-                                       model_center_Y=model_center_Y,
-                                       model_center_Z=model_center_Z)
+        return self.m_img_create_model()
 
-    def m_img_create_model(self, model_center_X=10000.0, model_center_Y=10000.0, model_center_Z=10000.0):
+    def m_img_create_model(self):
         img_L_pnts = self.imgL.FEATURE_POINTS()  # Take the points of left image
         img_R_pnts = self.imgR.FEATURE_POINTS()  # Take the points of right image
         img_L_colors = self.imgL.FEATURE_COLORS()  # Take the color for points of left image
@@ -234,9 +239,9 @@ class ImageMatching:
         Z_o /= retval
 
         # Move pair model to new principal point
-        dx = model_center_X - X_o
-        dy = model_center_Y - Y_o
-        dz = model_center_Z - Z_o
+        dx = self.model_center_X - X_o
+        dy = self.model_center_Y - Y_o
+        dz = self.model_center_Z - Z_o
 
         for i in range(0, retval):
             self.model_coord_list[i][0] += dx
