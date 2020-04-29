@@ -1096,8 +1096,9 @@ class SFM:
         # -------------------------------------------- #
 
     def sfm_remove_noise_from_model(self):
+        print("")
+        message_print("Remove Noise Points.")
         model_size = len(self.model_points)
-        message_print("\nRemove Noise Points.")
         model_clustering, label = dbscan(self.model_points, min_samples=10)
         counter_id = 0
         model_points = []
@@ -1135,7 +1136,8 @@ class SFM:
         # -------------------------------------------- #
 
     def sfm_mesh_creation_ball_pivoting(self):
-        message_print("\nCreate meshes using Ball Pivoting Algorithm")
+        print("")
+        message_print("Create meshes using Ball Pivoting Algorithm")
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(np.array(self.model_points))
         pcd.colors = o3d.utility.Vector3dVector(np.array(self.model_colors) / 255)
@@ -1174,7 +1176,8 @@ class SFM:
         # -------------------------------------------- #
 
     def sfm_mesh_creation_poisson(self):
-        message_print("\nCreate meshes using Poisson Algorithm")
+        print("")
+        message_print("Create meshes using Poisson Algorithm")
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(np.array(self.model_points))
         pcd.colors = o3d.utility.Vector3dVector(np.array(self.model_colors) / 255)
