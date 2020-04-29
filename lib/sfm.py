@@ -2,6 +2,7 @@
 import os
 import glob
 import math as mth
+import open3d as o3d
 from sklearn.cluster import dbscan
 
 # Written Libraries #
@@ -15,10 +16,12 @@ FAST_MEDIUM_MATCH = 1
 MEDIUM_SPEED_MATCH = 2
 SLOW_MATCH = 3
 
+
 class SFM:
     """
     The Structure from Motion main class. This class contains the methods for running the SFM process.
     """
+
     def __init__(self):
         # Create a list with all OpenCV supported image file formats
         self.ALL_SUPPORTED_FORMATS_LIST = ["*.jpg", "*.jpeg", "*.jpe", "*.png", "*.bmp",
@@ -27,6 +30,7 @@ class SFM:
         self.image_list: [] = []  # Create the list of images
         self.match_list: [] = []  # Create the list for image matching
 
+        self.model_export_path = ""
         self.model_id: [] = []  # The id list for each model point [id]
         self.model_points: [] = []  # The list of model points [X, Y, Z]
         self.model_colors: [] = []  # The list of the colors for each point [R, G, B]
@@ -59,6 +63,8 @@ class SFM:
             self.sfm_image_matching_medium(match_method=match_method)  # Match Images
         self.sfm_model_creation_dictionary()
         self.sfm_remove_noise_from_model()
+        self.sfm_mesh_creation_ball_pivoting()
+        self.sfm_mesh_creation_poisson()
 
     def sfm_set_image_list(self, f_src):
         """
@@ -83,7 +89,7 @@ class SFM:
         # -------------------------------------------- #
         # print(len(self.image_list))
         # for img in self.image_list:
-            # print(img.IMG_NAME())
+        # print(img.IMG_NAME())
         # print(self.image_list[0].CAMERA_MATRIX())
         # print(self.image_list[0].INFO())
         # -------------------------------------------- #
@@ -115,8 +121,8 @@ class SFM:
         matchSize = image_list_size - 1  # Set a matchSize counter
         loop_counter = 1  # Create a loop counter for message printing
         match_id_counter = 0  # Create a counter for keeping track the match id
-        for index_L in range(0, image_list_size-1):  # For all images which can be left (0, N-1)
-            index_R = index_L+1
+        for index_L in range(0, image_list_size - 1):  # For all images which can be left (0, N-1)
+            index_R = index_L + 1
             # Console Messaging
             print("\n")
             message_print("(%d / " % loop_counter + "%d) " % matchSize
@@ -146,7 +152,7 @@ class SFM:
         matchSize = image_list_size - 1  # Set a matchSize counter
         loop_counter = 1  # Create a loop counter for message printing
         match_id_counter = 0  # Create a counter for keeping track the match id
-        for index_L in range(0, image_list_size-1):  # For all images which can be left (0, N-1)
+        for index_L in range(0, image_list_size - 1):  # For all images which can be left (0, N-1)
             for index_R in range(index_L + 1, image_list_size):  # For all images which can be right (1, N)
                 # Console Messaging
                 print("\n")
@@ -182,8 +188,8 @@ class SFM:
             matchSize += image_list_size - i  # Perform the previous equation
         loop_counter = 1  # Create a loop counter for message printing
         match_id_counter = 0  # Create a counter for keeping track the match id
-        for index_L in range(0, image_list_size-1):  # For all images which can be left (0, N-1)
-            for index_R in range(index_L+1, image_list_size):  # For all images which can be right (1, N)
+        for index_L in range(0, image_list_size - 1):  # For all images which can be left (0, N-1)
+            for index_R in range(index_L + 1, image_list_size):  # For all images which can be right (1, N)
                 # Console Messaging
                 print("\n")
                 message_print("(%d / " % loop_counter + "%d) " % matchSize
@@ -410,19 +416,19 @@ class SFM:
                 model_curr_scaled_points.clear()
 
                 # -------------------------------------------- #
-                #export_path = os.path.expanduser("~/Desktop")
-                #export_path += "/sfm_tmp/"
-                #export_path_norm = os.path.normpath(export_path)
-                #if not os.path.exists(export_path_norm):
+                # export_path = os.path.expanduser("~/Desktop")
+                # export_path += "/sfm_tmp/"
+                # export_path_norm = os.path.normpath(export_path)
+                # if not os.path.exists(export_path_norm):
                 #    os.mkdir(export_path_norm)
-                #export_path += "/final"
-                #export_path_norm = os.path.normpath(export_path)
-                #if not os.path.exists(export_path_norm):
+                # export_path += "/final"
+                # export_path_norm = os.path.normpath(export_path)
+                # if not os.path.exists(export_path_norm):
                 #    os.mkdir(export_path_norm)
-                #export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
+                # export_path += "/" + model_curr_image_L.IMG_NAME() + "_" \
                 #               + model_curr_image_R.IMG_NAME() + "_final.ply"
-                #export_path_norm = os.path.normpath(export_path)
-                #export_as_ply(model_curr_scaled_R_t_points, model_curr_colors, export_path_norm)
+                # export_path_norm = os.path.normpath(export_path)
+                # export_as_ply(model_curr_scaled_R_t_points, model_curr_colors, export_path_norm)
                 # -------------------------------------------- #
                 model_fin_m_ids.clear()
                 model_fin_m_points.clear()
@@ -1126,6 +1132,75 @@ class SFM:
         export_path += "/model_no_noise_final.ply"
         export_path_norm = os.path.normpath(export_path)
         export_as_ply(self.model_points, self.model_colors, export_path_norm)
+        # -------------------------------------------- #
+
+    def sfm_mesh_creation_ball_pivoting(self):
+        message_print("\nCreate meshes using Ball Pivoting Algorithm")
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(np.array(self.model_points))
+        pcd.colors = o3d.utility.Vector3dVector(np.array(self.model_colors) / 255)
+        pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+
+        distances = pcd.compute_nearest_neighbor_distance()
+        avg_dist = np.mean(distances)
+        radius = 3 * avg_dist
+
+        bpa_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd,
+                                                                                   o3d.utility.DoubleVector(
+                                                                                       [radius, radius * 2]))
+
+        dec_mesh = bpa_mesh.simplify_quadric_decimation(100000)
+
+        dec_mesh.remove_degenerate_triangles()
+        dec_mesh.remove_duplicated_triangles()
+        dec_mesh.remove_duplicated_vertices()
+        dec_mesh.remove_non_manifold_edges()
+
+        # -------------------------------------------- #
+        # Uncomment the following lines for debugging. #
+        # -------------------------------------------- #
+        export_path = os.path.expanduser("~/Desktop")
+        export_path += "/sfm_tmp/"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/model"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/model_no_noise_final_mesh_ball_pivoting.ply"
+        export_path_norm = os.path.normpath(export_path)
+        o3d.io.write_triangle_mesh(export_path_norm, dec_mesh)
+        # -------------------------------------------- #
+
+    def sfm_mesh_creation_poisson(self):
+        message_print("\nCreate meshes using Poisson Algorithm")
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(np.array(self.model_points))
+        pcd.colors = o3d.utility.Vector3dVector(np.array(self.model_colors) / 255)
+        pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+
+        poisson_mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=8, width=0, scale=1.1,
+                                                                                 linear_fit=False)[0]
+
+        bbox = pcd.get_axis_aligned_bounding_box()
+        p_mesh_crop = poisson_mesh.crop(bbox)
+
+        # -------------------------------------------- #
+        # Uncomment the following lines for debugging. #
+        # -------------------------------------------- #
+        export_path = os.path.expanduser("~/Desktop")
+        export_path += "/sfm_tmp/"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/model"
+        export_path_norm = os.path.normpath(export_path)
+        if not os.path.exists(export_path_norm):
+            os.mkdir(export_path_norm)
+        export_path += "/model_no_noise_final_poisson.ply"
+        export_path_norm = os.path.normpath(export_path)
+        o3d.io.write_triangle_mesh(export_path_norm, p_mesh_crop)
         # -------------------------------------------- #
 
     def sfm_new_entry(self):
